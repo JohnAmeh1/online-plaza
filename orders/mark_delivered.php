@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/config.php';
+require_once '../includes/functions.php';
 
 if (!isLoggedIn()) {
     header('Content-Type: application/json');
@@ -29,7 +30,7 @@ try {
         SELECT o.*, c.user_id as vendor_id 
         FROM orders o 
         JOIN companies c ON o.company_id = c.id 
-        WHERE o.id = ? AND o.user_id = ? AND o.status IN ('paid', 'shipped')
+        WHERE o.id = ? AND o.user_id = ? AND o.status IN ('pending', 'paid', 'shipped')
     ");
     $stmt->execute([$orderId, $_SESSION['user_id']]);
     $order = $stmt->fetch();
@@ -48,12 +49,17 @@ try {
     ");
     $creditVendor->execute([$order['total_amount'], $order['vendor_id']]);
 
-    // Record credit transaction for vendor
+    // Record credit transaction for vendor - SIMPLIFIED without reference_id
     $transactionStmt = $pdo->prepare("
-        INSERT INTO transactions (user_id, order_id, amount, type, description, status) 
-        VALUES (?, ?, ?, 'credit', 'Payment released for delivered order', 'completed')
+        INSERT INTO transactions (user_id, type, amount, description) 
+        VALUES (?, 'credit', ?, ?)
     ");
-    $transactionStmt->execute([$order['vendor_id'], $orderId, $order['total_amount']]);
+    $transactionDescription = 'Payment released for delivered order #' . $orderId;
+    $transactionStmt->execute([$order['vendor_id'], $order['total_amount'], $transactionDescription]);
+
+    // Update escrow status
+    $updateEscrow = $pdo->prepare("UPDATE wallet_escrow SET status = 'released', released_at = NOW() WHERE order_id = ?");
+    $updateEscrow->execute([$orderId]);
 
     $pdo->commit();
 
@@ -61,12 +67,11 @@ try {
         'success' => true,
         'message' => 'Order marked as delivered. Payment has been released to the vendor.'
     ]);
-
 } catch (Exception $e) {
     $pdo->rollBack();
+    error_log("Mark delivered error: " . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
 }
-?>

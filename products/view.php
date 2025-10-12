@@ -71,8 +71,8 @@ require_once '../includes/header.php';
                 <?php if ($product['category']): ?>
                     <li><i class="fas fa-chevron-right text-xs"></i></li>
                     <li>
-                        <a href="/online-plaza/products/index.php?category=<?php echo urlencode($product['category']); ?>" 
-                           class="hover:text-green-600 transition duration-300">
+                        <a href="/online-plaza/products/index.php?category=<?php echo urlencode($product['category']); ?>"
+                            class="hover:text-green-600 transition duration-300">
                             <?php echo htmlspecialchars($product['category']); ?>
                         </a>
                     </li>
@@ -117,9 +117,9 @@ require_once '../includes/header.php';
                                     <span class="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">Low Stock</span>
                                 <?php endif; ?>
                             </div>
-                            
+
                             <h1 class="text-3xl font-bold text-gray-900 mb-2"><?php echo htmlspecialchars($product['name']); ?></h1>
-                            
+
                             <!-- Rating -->
                             <div class="flex items-center mb-4">
                                 <?php if ($product['avg_rating']): ?>
@@ -188,14 +188,14 @@ require_once '../includes/header.php';
 
                     <!-- Action Buttons -->
                     <div class="flex flex-col sm:flex-row gap-4 mt-8">
-                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>" 
-                           class="flex-1 bg-gradient-to-r from-blue-500 to-green-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-green-600 transition duration-300 font-semibold text-center flex items-center justify-center">
+                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>"
+                            class="flex-1 bg-gradient-to-r from-blue-500 to-green-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-green-600 transition duration-300 font-semibold text-center flex items-center justify-center">
                             <i class="fas fa-store mr-2"></i>
                             Visit Store
                         </a>
                         <?php if ($product['stock_quantity'] > 0): ?>
-                            <button onclick="payNow(<?php echo $product['id']; ?>, <?php echo $product['price']; ?>)" 
-                                    class="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold flex items-center justify-center pay-now-btn">
+                            <button onclick="payNow(<?php echo $product['id']; ?>, <?php echo $product['price']; ?>)"
+                                class="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold flex items-center justify-center pay-now-btn">
                                 <i class="fas fa-credit-card mr-2"></i>
                                 Buy Now - ₦<?php echo number_format($product['price'], 2); ?>
                             </button>
@@ -284,8 +284,8 @@ require_once '../includes/header.php';
                             </div>
                         </div>
                         <p class="text-gray-600 text-sm"><?php echo htmlspecialchars($product['company_description']); ?></p>
-                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>" 
-                           class="block w-full bg-gray-100 text-gray-700 text-center py-3 rounded-xl hover:bg-gray-200 transition duration-300 font-semibold">
+                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>"
+                            class="block w-full bg-gray-100 text-gray-700 text-center py-3 rounded-xl hover:bg-gray-200 transition duration-300 font-semibold">
                             Visit Store
                         </a>
                     </div>
@@ -296,7 +296,7 @@ require_once '../includes/header.php';
         <!-- Reviews Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-6">Customer Reviews</h2>
-            
+
             <!-- Review Stats -->
             <?php if ($product['review_count'] > 0): ?>
                 <div class="flex items-center mb-6 p-4 bg-gray-50 rounded-xl">
@@ -395,13 +395,13 @@ require_once '../includes/header.php';
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Related Products</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <?php foreach ($related as $item): ?>
-                        <a href="/online-plaza/products/view.php?id=<?php echo $item['id']; ?>" 
-                           class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition duration-300 group">
+                        <a href="/online-plaza/products/view.php?id=<?php echo $item['id']; ?>"
+                            class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition duration-300 group">
                             <div class="h-40 bg-gray-100 overflow-hidden">
                                 <?php if ($item['image_url']): ?>
-                                    <img src="<?php echo htmlspecialchars($item['image_url']); ?>" 
-                                         alt="<?php echo htmlspecialchars($item['name']); ?>" 
-                                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                    <img src="<?php echo htmlspecialchars($item['image_url']); ?>"
+                                        alt="<?php echo htmlspecialchars($item['name']); ?>"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                                 <?php else: ?>
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
                                         <i class="fas fa-image text-2xl text-gray-400"></i>
@@ -430,7 +430,7 @@ require_once '../includes/header.php';
             star.addEventListener('click', function() {
                 const rating = parseInt(this.getAttribute('data-rating'));
                 selectedRating = rating;
-                
+
                 ratingStars.forEach(s => {
                     const starRating = parseInt(s.getAttribute('data-rating'));
                     if (starRating <= rating) {
@@ -441,7 +441,7 @@ require_once '../includes/header.php';
                         s.classList.add('text-gray-300');
                     }
                 });
-                
+
                 const radioInput = document.querySelector(`input[name="rating"][value="${rating}"]`);
                 if (radioInput) {
                     radioInput.checked = true;
@@ -490,20 +490,32 @@ require_once '../includes/header.php';
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
             btn.disabled = true;
 
-            // Simulate API call - replace with actual payment processing
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Success state
-            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Payment Successful!';
-            btn.classList.remove('from-green-500', 'to-blue-500', 'hover:from-green-600', 'hover:to-blue-600');
-            btn.classList.add('bg-green-500', 'hover:bg-green-600');
+            // Process payment via API
+            const formData = new FormData();
+            formData.append('product_id', productId);
 
-            showNotification('Payment processed successfully!', 'success');
+            const response = await fetch('/online-plaza/products/process_payment.php', {
+                method: 'POST',
+                body: formData
+            });
 
-            // Redirect to orders page after 2 seconds
-            setTimeout(() => {
-                window.location.href = '/online-plaza/orders/index.php';
-            }, 2000);
+            const result = await response.json();
+
+            if (result.success) {
+                // Success state
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Payment Successful!';
+                btn.classList.remove('from-green-500', 'to-blue-500', 'hover:from-green-600', 'hover:to-blue-600');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600');
+
+                showNotification(result.message, 'success');
+
+                // Redirect to orders page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/online-plaza/orders/index.php';
+                }, 2000);
+            } else {
+                throw new Error(result.message);
+            }
 
         } catch (error) {
             console.error('Payment error:', error);
@@ -513,7 +525,7 @@ require_once '../includes/header.php';
             btn.classList.remove('from-green-500', 'to-blue-500', 'hover:from-green-600', 'hover:to-blue-600');
             btn.classList.add('bg-red-500', 'hover:bg-red-600');
 
-            showNotification('Payment failed. Please try again.', 'error');
+            showNotification(error.message || 'Payment failed. Please try again.', 'error');
 
             // Reset button after 3 seconds
             setTimeout(() => {
