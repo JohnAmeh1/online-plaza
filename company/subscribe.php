@@ -34,7 +34,7 @@ $error = '';
 $success = '';
 
 // Paystack configuration
-$paystackPublicKey = 'pk_test_your_public_key_here'; // Replace with your Paystack public key
+$paystackPublicKey = 'pk_test_fdeb97ce15dc119e28cc589fcb24fac669b14f81'; // Replace with your Paystack public key
 $paystackSecretKey = 'sk_test_b91e0557f6dca556b24425e6f6683cba1e86c25b';
 
 // Handle payment callback

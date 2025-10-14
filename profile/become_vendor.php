@@ -23,39 +23,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contact_email = trim($_POST['contact_email']);
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
-    
+
     // Validation
     if (empty($company_name) || empty($description) || empty($contact_email)) {
         $error = 'Please fill in all required fields.';
     } elseif (!filter_var($contact_email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid contact email address.';
+    } elseif (strlen($company_name) < 2) {
+        $error = 'Company name must be at least 2 characters long.';
+    } elseif (strlen($description) < 10) {
+        $error = 'Please provide a more detailed company description (at least 10 characters).';
     } else {
         // Check if company name already exists
         $stmt = $pdo->prepare("SELECT id FROM companies WHERE name = ?");
         $stmt->execute([$company_name]);
-        
+
         if ($stmt->fetch()) {
             $error = 'Company name already exists. Please choose a different name.';
         } else {
             // Start transaction
             $pdo->beginTransaction();
-            
+
             try {
                 // Insert company with pending subscription status
                 $stmt = $pdo->prepare("INSERT INTO companies (user_id, name, description, contact_email, phone, address, subscription_status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())");
                 $stmt->execute([$currentUser['id'], $company_name, $description, $contact_email, $phone, $address]);
                 $company_id = $pdo->lastInsertId();
-                
+
                 $pdo->commit();
-                
+
                 // Store company ID in session for payment processing
                 $_SESSION['pending_company_id'] = $company_id;
                 $_SESSION['pending_company_name'] = $company_name;
-                
+                $_SESSION['pending_subscription_amount'] = 25000; // ₦25,000 in kobo
+
                 // Redirect to payment page
                 header('Location: /online-plaza/company/vendor_payment.php');
                 exit;
-                
             } catch (Exception $e) {
                 $pdo->rollBack();
                 $error = 'An error occurred while setting up your vendor account. Please try again.';
@@ -88,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
             <?php endif; ?>
-            
+
             <?php if ($success): ?>
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                     <div class="flex items-center">
@@ -120,15 +124,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Registration Form -->
                 <div class="lg:col-span-2">
-                    <form method="POST" class="space-y-6">
+                    <form method="POST" class="space-y-6" id="vendorForm">
                         <div>
                             <label for="company_name" class="block text-base font-medium text-gray-700 mb-2">
                                 Company Name *
                             </label>
-                            <input type="text" id="company_name" name="company_name" required 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
-                                   placeholder="Enter your company name"
-                                   value="<?php echo isset($_POST['company_name']) ? htmlspecialchars($_POST['company_name']) : ''; ?>">
+                            <input type="text" id="company_name" name="company_name" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
+                                placeholder="Enter your company name"
+                                value="<?php echo isset($_POST['company_name']) ? htmlspecialchars($_POST['company_name']) : ''; ?>">
                             <p class="text-sm text-gray-500 mt-1">Choose a unique name for your business</p>
                         </div>
 
@@ -137,8 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 Company Description *
                             </label>
                             <textarea id="description" name="description" required rows="4"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
-                                      placeholder="Describe your company, products, and mission"><?php echo isset($_POST['description']) ? htmlspecialchars($_POST['description']) : ''; ?></textarea>
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
+                                placeholder="Describe your company, products, and mission"><?php echo isset($_POST['description']) ? htmlspecialchars($_POST['description']) : ''; ?></textarea>
                             <p class="text-sm text-gray-500 mt-1">Tell customers about your business</p>
                         </div>
 
@@ -148,9 +152,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     Contact Email *
                                 </label>
                                 <input type="email" id="contact_email" name="contact_email" required
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
-                                       placeholder="business@email.com"
-                                       value="<?php echo isset($_POST['contact_email']) ? htmlspecialchars($_POST['contact_email']) : ''; ?>">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
+                                    placeholder="business@email.com"
+                                    value="<?php echo isset($_POST['contact_email']) ? htmlspecialchars($_POST['contact_email']) : ''; ?>">
                             </div>
 
                             <div>
@@ -158,9 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     Phone Number
                                 </label>
                                 <input type="tel" id="phone" name="phone"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
-                                       placeholder="+1 (555) 123-4567"
-                                       value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
+                                    placeholder="+1 (555) 123-4567"
+                                    value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>">
                             </div>
                         </div>
 
@@ -169,8 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 Business Address
                             </label>
                             <textarea id="address" name="address" rows="3"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
-                                      placeholder="Enter your business address (optional)"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-300"
+                                placeholder="Enter your business address (optional)"><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
                         </div>
 
                         <div class="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-gray-200 gap-4">
@@ -178,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="fas fa-arrow-left mr-2"></i>
                                 Back to Profile
                             </a>
-                            <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-lg hover:from-green-600 hover:to-blue-600 transition font-semibold flex items-center">
+                            <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-lg hover:from-green-600 hover:to-blue-600 transition font-semibold flex items-center" id="submitBtn">
                                 <i class="fas fa-store mr-2"></i>
                                 Continue to Payment
                             </button>
@@ -267,73 +271,141 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
-// Form validation and enhancement
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const companyNameInput = document.getElementById('company_name');
-    
-    // Real-time company name validation
-    companyNameInput.addEventListener('blur', function() {
-        const companyName = this.value.trim();
-        if (companyName.length > 0) {
-            validateCompanyName(companyName);
-        }
-    });
-    
-    function validateCompanyName(companyName) {
-        // You could add AJAX validation here to check if company name is available
-        console.log('Validating company name:', companyName);
-    }
-    
-    // Form submission enhancement
-    form.addEventListener('submit', function(e) {
-        const companyName = companyNameInput.value.trim();
-        const description = document.getElementById('description').value.trim();
-        const contactEmail = document.getElementById('contact_email').value.trim();
-        
-        if (companyName.length < 2) {
-            e.preventDefault();
-            showError('Company name must be at least 2 characters long.');
-            return;
-        }
-        
-        if (description.length < 10) {
-            e.preventDefault();
-            showError('Please provide a more detailed company description (at least 10 characters).');
-            return;
-        }
-        
-        // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-    });
-});
+    // Form validation and enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('vendorForm');
+        const companyNameInput = document.getElementById('company_name');
+        const descriptionInput = document.getElementById('description');
+        const contactEmailInput = document.getElementById('contact_email');
+        const submitBtn = document.getElementById('submitBtn');
 
-function showError(message) {
-    // Remove existing error notifications
-    const existingErrors = document.querySelectorAll('.custom-error');
-    existingErrors.forEach(error => error.remove());
-    
-    // Create error notification
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'custom-error bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6';
-    errorDiv.innerHTML = `
+        // Real-time validation
+        companyNameInput.addEventListener('blur', validateCompanyName);
+        descriptionInput.addEventListener('blur', validateDescription);
+        contactEmailInput.addEventListener('blur', validateEmail);
+
+        function validateCompanyName() {
+            const companyName = companyNameInput.value.trim();
+            if (companyName.length > 0 && companyName.length < 2) {
+                showFieldError(companyNameInput, 'Company name must be at least 2 characters long.');
+            } else {
+                clearFieldError(companyNameInput);
+            }
+        }
+
+        function validateDescription() {
+            const description = descriptionInput.value.trim();
+            if (description.length > 0 && description.length < 10) {
+                showFieldError(descriptionInput, 'Please provide a more detailed company description (at least 10 characters).');
+            } else {
+                clearFieldError(descriptionInput);
+            }
+        }
+
+        function validateEmail() {
+            const email = contactEmailInput.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email.length > 0 && !emailRegex.test(email)) {
+                showFieldError(contactEmailInput, 'Please enter a valid email address.');
+            } else {
+                clearFieldError(contactEmailInput);
+            }
+        }
+
+        function showFieldError(input, message) {
+            clearFieldError(input);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-red-500 text-sm mt-1 field-error';
+            errorDiv.textContent = message;
+            input.parentNode.appendChild(errorDiv);
+            input.classList.add('border-red-500');
+        }
+
+        function clearFieldError(input) {
+            const existingError = input.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            input.classList.remove('border-red-500');
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            const companyName = companyNameInput.value.trim();
+            const description = descriptionInput.value.trim();
+            const contactEmail = contactEmailInput.value.trim();
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.custom-error').forEach(error => error.remove());
+
+            // Validate company name
+            if (companyName.length < 2) {
+                showError('Company name must be at least 2 characters long.');
+                companyNameInput.focus();
+                isValid = false;
+            }
+
+            // Validate description
+            if (description.length < 10) {
+                showError('Please provide a more detailed company description (at least 10 characters).');
+                if (isValid) descriptionInput.focus();
+                isValid = false;
+            }
+
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(contactEmail)) {
+                showError('Please enter a valid contact email address.');
+                if (isValid) contactEmailInput.focus();
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+
+            // Form will submit normally if validation passes
+        });
+    });
+
+    function showError(message) {
+        // Remove existing error notifications
+        const existingErrors = document.querySelectorAll('.custom-error');
+        existingErrors.forEach(error => error.remove());
+
+        // Create error notification
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'custom-error bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6';
+        errorDiv.innerHTML = `
         <div class="flex items-center">
             <i class="fas fa-exclamation-circle mr-2"></i>
             <span>${message}</span>
         </div>
     `;
-    
-    const form = document.querySelector('form');
-    form.parentNode.insertBefore(errorDiv, form);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        errorDiv.remove();
-    }, 5000);
-}
+
+        const form = document.querySelector('form');
+        form.parentNode.insertBefore(errorDiv, form);
+
+        // Scroll to error
+        errorDiv.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
-
