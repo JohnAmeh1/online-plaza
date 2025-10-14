@@ -25,175 +25,167 @@ if (isLoggedIn()) {
 
     $stmt = $pdo->prepare("SELECT post_id FROM post_likes WHERE user_id = ?");
     $stmt->execute([$userId]);
-    $userLikes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $likedPosts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $userLikes = array_flip($likedPosts);
 }
 ?>
 
 <?php require_once '../includes/header.php'; ?>
 
-<div class="max-w-4xl mx-auto bg-black min-h-screen relative overflow-y-auto custom-scrollbar" style="max-height: 950px;">
-    <?php if ($posts): ?>
-        <div class="pt-20 pb-4 relative">
-            <!-- Navigation Arrows -->
-            <div class="fixed right-8 top-1/2 transform -translate-y-1/2 z-30 flex flex-col space-y-4">
-                <!-- Up Arrow -->
-                <button id="prevPost" class="w-12 h-12 bg-black/70 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 opacity-70 hover:opacity-100 arrow-btn">
-                    <i class="fas fa-chevron-up text-white text-xl"></i>
-                </button>
-                
-                <!-- Down Arrow -->
-                <button id="nextPost" class="w-12 h-12 bg-black/70 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 opacity-70 hover:opacity-100 arrow-btn">
-                    <i class="fas fa-chevron-down text-white text-xl"></i>
-                </button>
-            </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-green-50">
+    <div class="max-w-3xl mx-auto px-4 py-6">
+        <?php if ($posts): ?>
+            <?php foreach ($posts as $post): ?>
+                <?php $isLiked = isLoggedIn() && isset($userLikes[$post['id']]); ?>
 
-            <?php foreach ($posts as $index => $post): ?>
-                <?php
-                $isLiked = in_array($post['id'], $userLikes);
-                ?>
-                <div class="post-container relative min-h-[80vh] md:min-h-[90vh] mb-8 bg-black rounded-xl overflow-hidden border border-gray-800 shadow-lg" data-post-index="<?php echo $index; ?>">
-                    <!-- Media Container -->
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <?php if ($post['media_url']): ?>
-                            <?php if ($post['media_type'] === 'image'): ?>
-                                <img src="<?php echo htmlspecialchars($post['media_url']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>"
-                                    class="w-full h-full object-cover">
+                <!-- Post Card -->
+                <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 mb-6 overflow-hidden border border-gray-200" data-post-id="<?php echo $post['id']; ?>">
+                    <!-- Post Header -->
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <?php if ($post['company_logo']): ?>
+                                <img src="<?php echo htmlspecialchars($post['company_logo']); ?>"
+                                    alt="<?php echo htmlspecialchars($post['company_name']); ?>"
+                                    class="w-12 h-12 rounded-full object-cover border-2 border-blue-300 shadow-md">
                             <?php else: ?>
-                                <video class="w-full h-full object-cover" controls playsinline autoplay muted loop>
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+                                    <?php echo strtoupper(substr($post['company_name'], 0, 2)); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div>
+                                <a href="/online-plaza/company/index.php?id=<?php echo $post['company_id']; ?>"
+                                    class="font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                                    <?php echo htmlspecialchars($post['company_name']); ?>
+                                </a>
+                                <p class="text-xs text-gray-500 flex items-center">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <?php echo date('M j, Y \a\t g:i A', strtotime($post['created_at'])); ?>
+                                </p>
+                            </div>
+                        </div>
+
+                        <button class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+
+                    <!-- Post Content -->
+                    <div class="px-4 pb-3">
+                        <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">
+                            <?php echo htmlspecialchars($post['content']); ?>
+                        </p>
+                    </div>
+
+                    <!-- Post Media -->
+                    <?php if ($post['media_url']): ?>
+                        <div class="w-full bg-gray-900">
+                            <?php if ($post['media_type'] === 'image'): ?>
+                                <img src="<?php echo htmlspecialchars($post['media_url']); ?>"
+                                    alt="<?php echo htmlspecialchars($post['title']); ?>"
+                                    class="w-full object-contain max-h-[600px]">
+                            <?php else: ?>
+                                <video class="w-full object-contain max-h-[600px]" controls playsinline>
                                     <source src="<?php echo htmlspecialchars($post['media_url']); ?>" type="video/mp4">
                                     Your browser does not support the video tag.
                                 </video>
                             <?php endif; ?>
-                        <?php else: ?>
-                            <div class="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-                                <div class="text-center text-gray-500">
-                                    <i class="fas fa-video text-4xl mb-4"></i>
-                                    <p>No media available</p>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Engagement Stats -->
+                    <div class="px-4 py-3 flex items-center justify-between text-sm text-gray-600 border-t border-gray-100">
+                        <div class="flex items-center space-x-2">
+                            <div class="flex -space-x-1">
+                                <div class="w-5 h-5 bg-gradient-to-br from-green-400 to-emerald-400 rounded-full flex items-center justify-center border-2 border-white">
+                                    <i class="fas fa-heart text-white text-xs"></i>
                                 </div>
                             </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Right Action Buttons -->
-                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center space-y-6 z-20">
-                        <!-- Like Button -->
-                        <div class="flex flex-col items-center">
-                            <button class="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 like-btn"
-                                data-post-id="<?php echo $post['id']; ?>"
-                                data-liked="<?php echo $isLiked ? 'true' : 'false'; ?>">
-                                <i class="<?php echo $isLiked ? 'fas text-red-500' : 'far'; ?> fa-heart text-xl like-icon"></i>
-                            </button>
-                            <span class="text-white text-xs font-semibold mt-1 like-count"><?php echo $post['like_count']; ?></span>
-                        </div>
-
-                        <!-- Comment Button -->
-                        <div class="flex flex-col items-center">
-                            <button class="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 comment-btn"
-                                data-post-id="<?php echo $post['id']; ?>">
-                                <i class="fas fa-comment text-white text-xl"></i>
-                            </button>
-                            <span class="text-white text-xs font-semibold mt-1 comment-count"><?php echo $post['comment_count']; ?></span>
-                        </div>
-
-                        <!-- Share Button -->
-                        <div class="flex flex-col items-center">
-                            <button class="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 share-btn"
-                                data-post-id="<?php echo $post['id']; ?>">
-                                <i class="fas fa-share text-white text-xl"></i>
-                            </button>
-                            <span class="text-white text-xs font-semibold mt-1 share-count">
-                                <?php echo $post['share_count']; ?>
+                            <span class="like-count-text hover:text-blue-600 cursor-pointer transition-colors">
+                                <span class="like-count" data-post-id="<?php echo $post['id']; ?>"><?php echo $post['like_count']; ?></span>
+                                <?php echo $post['like_count'] == 1 ? 'like' : 'likes'; ?>
                             </span>
                         </div>
 
-                        <!-- More Options -->
-                        <button class="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                            <i class="fas fa-ellipsis-h text-white text-lg"></i>
+                        <div class="flex items-center space-x-4">
+                            <span class="hover:text-blue-600 cursor-pointer transition-colors">
+                                <span class="comment-count" data-post-id="<?php echo $post['id']; ?>"><?php echo $post['comment_count']; ?></span>
+                                <?php echo $post['comment_count'] == 1 ? 'comment' : 'comments'; ?>
+                            </span>
+                            <span class="hover:text-blue-600 cursor-pointer transition-colors">
+                                <span class="share-count" data-post-id="<?php echo $post['id']; ?>"><?php echo $post['share_count']; ?></span>
+                                <?php echo $post['share_count'] == 1 ? 'share' : 'shares'; ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="px-4 py-2 border-t border-gray-200 flex items-center justify-around">
+                        <button class="like-btn flex-1 flex items-center justify-center space-x-2 py-3 rounded-lg hover:bg-gray-100 transition-all duration-300 group"
+                            data-post-id="<?php echo $post['id']; ?>"
+                            data-liked="<?php echo $isLiked ? 'true' : 'false'; ?>">
+                            <i class="<?php echo $isLiked ? 'fas text-green-500' : 'far text-gray-600'; ?> fa-heart text-xl like-icon transition-all duration-300 group-hover:scale-110"></i>
+                            <span class="font-semibold <?php echo $isLiked ? 'text-green-500' : 'text-gray-600'; ?> like-text group-hover:text-green-500 transition-colors">
+                                Like
+                            </span>
                         </button>
-                    </div>
 
-                    <!-- Bottom Info Section -->
-                    <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 to-transparent z-10">
-                        <!-- Company Info -->
-                        <div class="flex items-center mb-4">
-                            <?php if ($post['company_logo']): ?>
-                                <img src="<?php echo htmlspecialchars($post['company_logo']); ?>" alt="<?php echo htmlspecialchars($post['company_name']); ?>"
-                                    class="w-10 h-10 rounded-full object-cover border-2 border-white mr-3">
-                            <?php else: ?>
-                                <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                                    <?php echo strtoupper(substr($post['company_name'], 0, 2)); ?>
-                                </div>
-                            <?php endif; ?>
-                            <div class="flex-1">
-                                <a href="/online-plaza/company/index.php?id=<?php echo $post['company_id']; ?>" class="text-white font-semibold text-base hover:underline block">
-                                    <?php echo htmlspecialchars($post['company_name']); ?>
-                                </a>
-                                <button class="mt-1 px-4 py-1 bg-white/20 text-white text-sm rounded-full hover:bg-white/30 transition-all duration-300">
-                                    Follow
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Post Content -->
-                        <div class="mb-4">
-                            <p class="text-white text-base leading-relaxed line-clamp-3">
-                                <?php echo htmlspecialchars($post['content']); ?>
-                            </p>
-                        </div>
-
-                        <!-- Audio/Music and Timestamp -->
-                        <div class="flex items-center justify-between text-sm text-gray-300">
-                            <div class="flex items-center">
-                                <i class="fas fa-music mr-2"></i>
-                                <span>Original Sound - <?php echo htmlspecialchars($post['company_name']); ?></span>
-                            </div>
-                            <span class="text-gray-400">
-                                <?php echo date('M j, Y', strtotime($post['created_at'])); ?>
+                        <button class="comment-btn flex-1 flex items-center justify-center space-x-2 py-3 rounded-lg hover:bg-gray-100 transition-all duration-300 group"
+                            data-post-id="<?php echo $post['id']; ?>">
+                            <i class="far fa-comment text-xl text-gray-600 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110"></i>
+                            <span class="font-semibold text-gray-600 group-hover:text-blue-500 transition-colors">
+                                Comment
                             </span>
-                        </div>
+                        </button>
+
+                        <button class="share-btn flex-1 flex items-center justify-center space-x-2 py-3 rounded-lg hover:bg-gray-100 transition-all duration-300 group"
+                            data-post-id="<?php echo $post['id']; ?>">
+                            <i class="fas fa-share text-xl text-gray-600 group-hover:text-yellow-600 transition-all duration-300 group-hover:scale-110"></i>
+                            <span class="font-semibold text-gray-600 group-hover:text-yellow-600 transition-colors">
+                                Share
+                            </span>
+                        </button>
                     </div>
                 </div>
             <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <div class="flex items-center justify-center min-h-screen text-white pt-20">
-            <div class="text-center max-w-md mx-auto px-4">
-                <i class="fas fa-video text-6xl text-gray-500 mb-6"></i>
-                <h3 class="text-2xl font-semibold text-gray-400 mb-4">No Posts Yet</h3>
-                <p class="text-gray-500 text-lg mb-6">Check back later for updates from our vendors</p>
-                <button class="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors duration-300 font-semibold">
-                    Explore Companies
-                </button>
+        <?php else: ?>
+            <div class="flex items-center justify-center min-h-[60vh]">
+                <div class="text-center max-w-md mx-auto px-4">
+                    <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                        <i class="fas fa-newspaper text-5xl text-white"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-4">No Posts Yet</h3>
+                    <p class="text-gray-600 text-lg mb-8 leading-relaxed">Check back later for updates from our vendors</p>
+                </div>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <!-- Comment Modal -->
-<div id="commentModal" class="fixed inset-0 bg-black z-50 hidden transform transition-transform duration-300 ease-in-out translate-y-full">
-    <div class="flex flex-col h-full bg-white rounded-t-3xl overflow-hidden max-w-2xl mx-auto">
+<div id="commentModal" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <!-- Modal Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200">
-            <button class="text-gray-500 text-lg close-comment-modal hover:text-gray-700">
-                <i class="fas fa-times"></i>
+            <h3 class="text-xl font-bold text-gray-800">Comments</h3>
+            <button class="close-comment-modal text-gray-500 hover:text-gray-700 hover:bg-gray-100 w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center">
+                <i class="fas fa-times text-xl"></i>
             </button>
-            <h3 class="text-xl font-semibold">Comments</h3>
-            <div class="w-6"></div> <!-- Spacer for balance -->
         </div>
 
         <!-- Comments List -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-6" id="commentsList">
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar" id="commentsList">
             <!-- Comments will be loaded here -->
         </div>
 
         <!-- Comment Input -->
-        <div class="p-6 border-t border-gray-200 bg-white">
-            <div class="flex space-x-4">
+        <div class="p-6 border-t border-gray-200 bg-gray-50">
+            <div class="flex space-x-3">
                 <input type="text"
-                    placeholder="Add a comment..."
-                    class="flex-1 px-6 py-4 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all duration-300 comment-input text-base"
+                    placeholder="Write a comment..."
+                    class="flex-1 px-4 py-3 bg-white text-gray-800 placeholder-gray-500 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 comment-input border border-gray-200"
                     id="commentInput">
-                <button class="text-green-500 font-semibold px-6 hover:text-green-600 transition-colors duration-300 post-comment-btn text-base">
+                <button class="px-6 py-3 bg-gradient-to-r from-blue-400 to-cyan-400 text-white font-bold rounded-full hover:from-blue-500 hover:to-cyan-500 transition-all duration-300 post-comment-btn shadow-lg hover:shadow-xl hover:scale-105">
                     Post
                 </button>
             </div>
@@ -202,65 +194,40 @@ if (isLoggedIn()) {
 </div>
 
 <style>
-    /* Responsive container */
-    .max-w-4xl {
-        max-width: 896px;
+    /* Custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
     }
 
-    /* Better laptop layout */
-    @media (min-width: 768px) {
-        .min-h-\[90vh\] {
-            min-height: 90vh;
-        }
-
-        .relative.min-h-\[80vh\] {
-            margin: 0 auto 2rem;
-            max-width: 800px;
-        }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(229, 231, 235, 0.5);
+        border-radius: 4px;
     }
 
-    /* Line clamp utility */
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(to bottom, #60a5fa, #34d399);
+        border-radius: 4px;
     }
 
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* Smooth transitions */
-    * {
-        transition: all 0.2s ease-in-out;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(to bottom, #3b82f6, #10b981);
     }
 
     /* Like animation */
     @keyframes likeAnimation {
-        0% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
 
         50% {
             transform: scale(1.3);
         }
-
-        100% {
-            transform: scale(1);
-        }
     }
 
     .like-animation {
         animation: likeAnimation 0.4s ease-in-out;
-    }
-
-    /* Modal animation */
-    .modal-open {
-        transform: translateY(0) !important;
     }
 
     /* Fade in animation */
@@ -279,143 +246,11 @@ if (isLoggedIn()) {
     .animate-fade-in {
         animation: fadeIn 0.3s ease-out;
     }
-
-    /* Custom scrollbar for webkit */
-    ::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #1f2937;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #4b5563;
-        border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280;
-    }
-
-    /* Arrow button styles */
-    .arrow-btn {
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-
-    .arrow-btn:hover {
-        transform: scale(1.1);
-    }
-
-    /* Hide arrows on mobile */
-    @media (max-width: 768px) {
-        .fixed.right-8 {
-            display: none;
-        }
-    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let currentPostId = null;
-        let currentPostIndex = 0;
-        const postContainers = document.querySelectorAll('.post-container');
-        const totalPosts = postContainers.length;
-
-        // Navigation arrow functionality
-        const prevPostBtn = document.getElementById('prevPost');
-        const nextPostBtn = document.getElementById('nextPost');
-
-        // Update arrow states
-        function updateArrowStates() {
-            if (prevPostBtn) {
-                prevPostBtn.disabled = currentPostIndex === 0;
-                prevPostBtn.style.opacity = currentPostIndex === 0 ? '0.3' : '0.7';
-            }
-            
-            if (nextPostBtn) {
-                nextPostBtn.disabled = currentPostIndex === totalPosts - 1;
-                nextPostBtn.style.opacity = currentPostIndex === totalPosts - 1 ? '0.3' : '0.7';
-            }
-        }
-
-        // Navigate to post
-        function navigateToPost(index) {
-            if (index < 0 || index >= totalPosts) return;
-            
-            currentPostIndex = index;
-            const targetPost = postContainers[index];
-            
-            // Smooth scroll to the post
-            targetPost.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-
-            updateArrowStates();
-        }
-
-        // Previous post
-        if (prevPostBtn) {
-            prevPostBtn.addEventListener('click', function() {
-                if (currentPostIndex > 0) {
-                    navigateToPost(currentPostIndex - 1);
-                }
-            });
-        }
-
-        // Next post
-        if (nextPostBtn) {
-            nextPostBtn.addEventListener('click', function() {
-                if (currentPostIndex < totalPosts - 1) {
-                    navigateToPost(currentPostIndex + 1);
-                }
-            });
-        }
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                if (currentPostIndex > 0) {
-                    navigateToPost(currentPostIndex - 1);
-                }
-            } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                if (currentPostIndex < totalPosts - 1) {
-                    navigateToPost(currentPostIndex + 1);
-                }
-            }
-        });
-
-        // Track current post based on scroll position
-        function updateCurrentPostIndex() {
-            const scrollPosition = window.scrollY + 100; // Offset for better detection
-            
-            for (let i = 0; i < postContainers.length; i++) {
-                const post = postContainers[i];
-                const postTop = post.offsetTop;
-                const postBottom = postTop + post.offsetHeight;
-                
-                if (scrollPosition >= postTop && scrollPosition < postBottom) {
-                    currentPostIndex = i;
-                    updateArrowStates();
-                    break;
-                }
-            }
-        }
-
-        // Initialize arrow states
-        if (totalPosts > 0) {
-            updateArrowStates();
-            
-            // Update on scroll
-            window.addEventListener('scroll', updateCurrentPostIndex);
-            
-            // Also update on load
-            updateCurrentPostIndex();
-        }
 
         // Comment modal functionality
         const commentModal = document.getElementById('commentModal');
@@ -435,8 +270,6 @@ if (isLoggedIn()) {
 
         // Close comment modal
         closeCommentModal.addEventListener('click', closeModal);
-
-        // Close modal when clicking outside
         commentModal.addEventListener('click', function(e) {
             if (e.target === commentModal) {
                 closeModal();
@@ -451,143 +284,95 @@ if (isLoggedIn()) {
             }
         });
 
-        // Fixed Like functionality
-        const likeBtns = document.querySelectorAll('.like-btn');
-        likeBtns.forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const postId = this.dataset.postId;
-                const likeIcon = this.querySelector('.like-icon');
-                const likeCount = this.parentElement.querySelector('.like-count');
-                const isLiked = this.dataset.liked === 'true';
+        // // Like functionality - Fixed to work with new structure
+        // const likeBtns = document.querySelectorAll('.like-btn');
+        // likeBtns.forEach(btn => {
+        //     btn.addEventListener('click', async function() {
+        //         const postId = this.dataset.postId;
+        //         const isLiked = this.dataset.liked === 'true';
 
-                console.log('Like button clicked - Post:', postId, 'Current state:', isLiked);
+        //         // Get elements within the post card
+        //         const postCard = this.closest('[data-post-id]');
+        //         const icon = this.querySelector('.like-icon');
+        //         const likeText = this.querySelector('.like-text');
+        //         const likeCountElement = postCard.querySelector(`.like-count[data-post-id="${postId}"]`);
 
-                // Visual feedback
-                likeIcon.classList.add('like-animation');
-                this.style.pointerEvents = 'none'; // Prevent double clicks
+        //         if (!icon || !likeText || !likeCountElement) {
+        //             console.error('Like button elements not found');
+        //             return;
+        //         }
 
-                try {
-                    const formData = new URLSearchParams();
-                    formData.append('post_id', postId);
+        //         // Add animation
+        //         icon.classList.add('like-animation');
+        //         setTimeout(() => icon.classList.remove('like-animation'), 400);
 
-                    const response = await fetch('/online-plaza/posts/api/like.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: formData
-                    });
+        //         try {
+        //             const response = await fetch('/online-plaza/posts/api/like.php', {
+        //                 method: 'POST',
+        //                 headers: {
+        //                     'Content-Type': 'application/x-www-form-urlencoded',
+        //                 },
+        //                 body: `post_id=${postId}`
+        //             });
 
-                    // Check if response is JSON
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const text = await response.text();
-                        console.error('Non-JSON response from like.php:', text.substring(0, 200));
-                        throw new Error('Server returned an invalid response');
-                    }
+        //             const data = await response.json();
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+        //             if (data.success) {
+        //                 if (data.liked) {
+        //                     // User liked the post
+        //                     icon.classList.remove('far', 'text-gray-600');
+        //                     icon.classList.add('fas', 'text-green-500');
+        //                     likeText.classList.remove('text-gray-600');
+        //                     likeText.classList.add('text-green-500');
+        //                     this.dataset.liked = 'true';
+        //                 } else {
+        //                     // User unliked the post
+        //                     icon.classList.remove('fas', 'text-green-500');
+        //                     icon.classList.add('far', 'text-gray-600');
+        //                     likeText.classList.remove('text-green-500');
+        //                     likeText.classList.add('text-gray-600');
+        //                     this.dataset.liked = 'false';
+        //                 }
 
-                    const data = await response.json();
-                    console.log('Like response:', data);
+        //                 // Update like count
+        //                 likeCountElement.textContent = data.like_count;
 
-                    if (data.success) {
-                        // Update UI based on server response
-                        if (data.liked) {
-                            likeIcon.classList.replace('far', 'fas');
-                            likeIcon.classList.add('text-red-500');
-                            this.dataset.liked = 'true';
-                        } else {
-                            likeIcon.classList.replace('fas', 'far');
-                            likeIcon.classList.remove('text-red-500');
-                            this.dataset.liked = 'false';
-                        }
+        //                 showNotification(data.liked ? 'Post liked!' : 'Post unliked', 'success');
+        //             } else {
+        //                 showNotification(data.message || 'Failed to like post', 'error');
+        //             }
+        //         } catch (error) {
+        //             console.error('Error liking post:', error);
+        //             showNotification('Failed to like post', 'error');
+        //         }
+        //     });
+        // });
 
-                        // Update like count
-                        likeCount.textContent = data.like_count;
-
-                        // Show success message
-                        showNotification(data.liked ? 'Post liked!' : 'Post unliked!', 'success');
-                    } else {
-                        throw new Error(data.message || 'Like action failed');
-                    }
-                } catch (error) {
-                    console.error('Like error:', error);
-                    showNotification('Error: ' + error.message, 'error');
-
-                    // Revert visual state on error
-                    if (isLiked) {
-                        likeIcon.classList.replace('far', 'fas');
-                        likeIcon.classList.add('text-red-500');
-                    } else {
-                        likeIcon.classList.replace('fas', 'far');
-                        likeIcon.classList.remove('text-red-500');
-                    }
-                } finally {
-                    setTimeout(() => {
-                        likeIcon.classList.remove('like-animation');
-                        this.style.pointerEvents = 'auto';
-                    }, 400);
-                }
-            });
-        });
-
-        // Improved Share functionality
+        // Share functionality
         const shareBtns = document.querySelectorAll('.share-btn');
         shareBtns.forEach(btn => {
             btn.addEventListener('click', async function() {
-                const postContainer = this.closest('.relative');
-                const likeBtn = postContainer.querySelector('.like-btn');
-                const postId = likeBtn ? likeBtn.dataset.postId : this.dataset.postId;
-                const shareCountElement = this.parentElement.querySelector('span');
-
-                if (!postId) {
-                    showNotification('Error: Cannot identify post to share', 'error');
-                    return;
-                }
-
-                console.log('Sharing post:', postId);
-
-                // Visual feedback
-                const originalHTML = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin text-white text-xl"></i>';
-                this.disabled = true;
+                const postId = this.dataset.postId;
+                const postCard = this.closest('[data-post-id]');
+                const shareCountElement = postCard.querySelector(`.share-count[data-post-id="${postId}"]`);
 
                 try {
-                    const formData = new URLSearchParams();
-                    formData.append('post_id', postId);
-
                     const response = await fetch('/online-plaza/posts/api/share.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: formData
+                        body: `post_id=${postId}`
                     });
 
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (jsonError) {
-                        console.error('JSON parse error:', jsonError);
-                        throw new Error('Invalid response from server');
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`Server error: ${response.status} ${response.statusText}`);
-                    }
+                    const data = await response.json();
 
                     if (data.success) {
-                        // Update share count
                         if (shareCountElement) {
                             shareCountElement.textContent = data.share_count;
                         }
-
                         showNotification(data.message, 'success');
 
-                        // Try native share API
                         if (navigator.share) {
                             try {
                                 await navigator.share({
@@ -596,111 +381,86 @@ if (isLoggedIn()) {
                                     url: window.location.href
                                 });
                             } catch (shareError) {
-                                console.log('Native share canceled or failed:', shareError);
+                                console.log('Native share canceled');
                             }
                         }
-                    } else {
-                        throw new Error(data.message || 'Failed to share post');
                     }
-
                 } catch (error) {
-                    console.error('Share error details:', error);
-                    showNotification('Share failed: ' + error.message, 'error');
-                } finally {
-                    // Reset button state
-                    this.innerHTML = originalHTML;
-                    this.disabled = false;
+                    console.error('Error sharing post:', error);
+                    showNotification('Failed to share post', 'error');
                 }
             });
         });
 
         function showNotification(message, type = 'success') {
-            // Remove existing notifications
             const existingNotifications = document.querySelectorAll('.custom-notification');
             existingNotifications.forEach(notification => notification.remove());
 
             const notification = document.createElement('div');
-            notification.className = `custom-notification fixed top-20 right-4 p-4 rounded-lg text-white z-50 ${
-                type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            }`;
+            notification.className = `custom-notification fixed top-24 right-6 p-4 rounded-2xl text-white z-50 shadow-2xl backdrop-blur-xl border-2 ${
+            type === 'success' 
+                ? 'bg-gradient-to-r from-green-400 to-emerald-400 border-green-300' 
+                : 'bg-gradient-to-r from-red-400 to-rose-400 border-red-300'
+        }`;
             notification.textContent = message;
-
-            // Add close button
-            const closeBtn = document.createElement('button');
-            closeBtn.innerHTML = '&times;';
-            closeBtn.className = 'ml-4 text-white hover:text-gray-200';
-            closeBtn.onclick = () => notification.remove();
-            notification.appendChild(closeBtn);
 
             document.body.appendChild(notification);
 
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.remove();
                 }
-            }, 5000);
+            }, 3000);
         }
 
         function openCommentModal(postId) {
             loadComments(postId);
             commentModal.classList.remove('hidden');
-            setTimeout(() => {
-                commentModal.classList.add('modal-open');
-            }, 50);
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
-            commentModal.classList.remove('modal-open');
-            setTimeout(() => {
-                commentModal.classList.add('hidden');
-            }, 300);
+            commentModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
             commentInput.value = '';
         }
 
         function loadComments(postId) {
-            // Show loading state
             commentsList.innerHTML = `
             <div class="flex justify-center items-center py-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-400 border-t-transparent"></div>
             </div>
         `;
 
-            // Fetch actual comments from API
             fetch(`/online-plaza/posts/api/get_comments.php?post_id=${postId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success && data.comments && data.comments.length > 0) {
                         commentsList.innerHTML = data.comments.map(comment => `
                         <div class="flex space-x-3 animate-fade-in">
-                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0">
                                 ${(comment.username || 'U').charAt(0).toUpperCase()}
                             </div>
                             <div class="flex-1">
-                                <div class="bg-gray-100 rounded-2xl px-4 py-2">
-                                    <p class="font-semibold text-sm">${comment.username || 'User'}</p>
+                                <div class="bg-gray-100 rounded-2xl px-4 py-3">
+                                    <p class="font-bold text-sm text-gray-800 mb-1">${comment.username || 'User'}</p>
                                     <p class="text-gray-700">${comment.comment}</p>
                                 </div>
-                                <div class="flex space-x-4 text-xs text-gray-500 mt-1 px-1">
-                                    <span>${formatTime(comment.created_at)}</span>
-                                    <button class="hover:text-gray-700">Like</button>
-                                    <button class="hover:text-gray-700">Reply</button>
+                                <div class="flex space-x-4 text-xs text-gray-500 mt-2 px-1">
+                                    <span class="font-medium">${formatTime(comment.created_at)}</span>
+                                    <button class="hover:text-blue-500 transition-colors font-semibold">Like</button>
+                                    <button class="hover:text-blue-500 transition-colors font-semibold">Reply</button>
                                 </div>
                             </div>
                         </div>
                     `).join('');
                     } else {
                         commentsList.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <i class="fas fa-comments text-3xl mb-2"></i>
-                            <p>No comments yet</p>
+                        <div class="text-center text-gray-500 py-12">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-comments text-4xl text-blue-400"></i>
+                            </div>
+                            <p class="text-lg font-semibold text-gray-700 mb-2">No comments yet</p>
                             <p class="text-sm">Be the first to comment!</p>
                         </div>
                     `;
@@ -709,11 +469,9 @@ if (isLoggedIn()) {
                 .catch(error => {
                     console.error('Error loading comments:', error);
                     commentsList.innerHTML = `
-                    <div class="text-center text-red-500 py-8">
-                        <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                        <p>Failed to load comments</p>
-                        <p class="text-sm">Please try again later</p>
-                        <p class="text-xs mt-2">Error: ${error.message}</p>
+                    <div class="text-center text-red-500 py-12">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <p class="text-lg font-semibold">Failed to load comments</p>
                     </div>
                 `;
                 });
@@ -723,12 +481,10 @@ if (isLoggedIn()) {
             const comment = commentInput.value.trim();
             if (!comment) return;
 
-            // Show loading state
             const originalText = postCommentBtn.innerHTML;
             postCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             postCommentBtn.disabled = true;
 
-            // Send comment to API
             fetch('/online-plaza/posts/api/comment.php', {
                     method: 'POST',
                     headers: {
@@ -736,29 +492,23 @@ if (isLoggedIn()) {
                     },
                     body: `post_id=${currentPostId}&comment=${encodeURIComponent(comment)}`
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Add new comment to the list
                         const commentHTML = `
                     <div class="flex space-x-3 animate-fade-in">
-                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0">
                             ${(data.comment.username || 'U').charAt(0).toUpperCase()}
                         </div>
                         <div class="flex-1">
-                            <div class="bg-gray-100 rounded-2xl px-4 py-2">
-                                <p class="font-semibold text-sm">${data.comment.username || 'You'}</p>
+                            <div class="bg-gray-100 rounded-2xl px-4 py-3">
+                                <p class="font-bold text-sm text-gray-800 mb-1">${data.comment.username || 'You'}</p>
                                 <p class="text-gray-700">${comment}</p>
                             </div>
-                            <div class="flex space-x-4 text-xs text-gray-500 mt-1 px-1">
-                                <span>Just now</span>
-                                <button class="hover:text-gray-700">Like</button>
-                                <button class="hover:text-gray-700">Reply</button>
+                            <div class="flex space-x-4 text-xs text-gray-500 mt-2 px-1">
+                                <span class="font-medium">Just now</span>
+                                <button class="hover:text-blue-500 transition-colors font-semibold">Like</button>
+                                <button class="hover:text-blue-500 transition-colors font-semibold">Reply</button>
                             </div>
                         </div>
                     </div>
@@ -770,24 +520,21 @@ if (isLoggedIn()) {
                             commentsList.insertAdjacentHTML('afterbegin', commentHTML);
                         }
 
-                        // Update comment count
-                        const commentCount = document.querySelector(`[data-post-id="${currentPostId}"]`).parentElement.querySelector('.comment-count');
-                        if (commentCount) {
-                            commentCount.textContent = parseInt(commentCount.textContent) + 1;
+                        // Update comment counts
+                        const commentCountElement = document.querySelector(`.comment-count[data-post-id="${currentPostId}"]`);
+                        if (commentCountElement && data.comment_count !== undefined) {
+                            commentCountElement.textContent = data.comment_count;
                         }
 
-                        // Clear input
                         commentInput.value = '';
-
-                        // Show success notification
                         showNotification('Comment posted successfully!', 'success');
                     } else {
-                        showNotification('Failed to post comment: ' + (data.message || 'Unknown error'), 'error');
+                        showNotification('Failed to post comment', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error posting comment:', error);
-                    showNotification('An error occurred while posting the comment: ' + error.message, 'error');
+                    showNotification('An error occurred', 'error');
                 })
                 .finally(() => {
                     postCommentBtn.innerHTML = originalText;

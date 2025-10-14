@@ -140,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="file" id="media_file" name="media_file" accept="image/*,video/*"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                            onchange="previewMedia(this)">
+                    <p class="text-xs text-gray-500 mt-1">Make sure your videos are not above 20 seconds.</p>
                     <p class="text-xs text-gray-500 mt-1">Max file size: 10MB. For images: JPEG, PNG, GIF, WebP. For videos: MP4, MOV, AVI, WebM.</p>
                 </div>
             </div>

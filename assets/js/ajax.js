@@ -63,12 +63,12 @@ class AjaxHelper {
 
     // Create new notification
     const notification = document.createElement("div");
-    notification.className = `ajax-notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+    notification.className = `ajax-notification fixed top-24 right-6 p-4 rounded-2xl text-white z-50 shadow-2xl backdrop-blur-xl border-2 ${
       type === "success"
-        ? "bg-green-500 text-white"
+        ? "bg-gradient-to-r from-green-400 to-emerald-400 border-green-300"
         : type === "error"
-        ? "bg-red-500 text-white"
-        : "bg-blue-500 text-white"
+        ? "bg-gradient-to-r from-red-400 to-rose-400 border-red-300"
+        : "bg-gradient-to-r from-blue-400 to-cyan-400 border-blue-300"
     }`;
     notification.textContent = message;
 
@@ -76,68 +76,149 @@ class AjaxHelper {
 
     // Auto remove after 5 seconds
     setTimeout(() => {
-      notification.remove();
+      if (notification.parentNode) {
+        notification.remove();
+      }
     }, 5000);
   }
 }
 
 // Post interactions
 class PostInteractions {
-  static async likePost(postId) {
-    console.log("Liking post:", postId);
+  static async likePost(likeButton) {
+    const postId = likeButton.getAttribute("data-post-id");
+    console.log("=== Starting like operation ===");
+    console.log("Post ID:", postId);
+    console.log("Button element:", likeButton);
 
-    const likeButton = document.querySelector(
-      `.like-btn[data-post-id="${postId}"]`
-    );
-    const likeCount = likeButton?.parentElement.querySelector(".like-count");
-    const likeIcon = likeButton?.querySelector(".like-icon");
-
-    if (!likeButton || !likeCount || !likeIcon) {
-      console.error("Like button elements not found");
-      return;
+    if (!postId) {
+      console.error("No post ID found on button");
+      throw new Error("Invalid post ID");
     }
 
-    // Get current state
-    const isCurrentlyLiked = likeButton.dataset.liked === "true";
+    // Find the post card by traversing up from the button
+    // We need to skip the button itself and find the parent post card
+    // The post card should be a div with class containing 'bg-white' and 'rounded'
+    const postCard = likeButton.closest('div.bg-white.rounded-2xl');
+    console.log("Post card found:", !!postCard);
+    
+    if (postCard) {
+      console.log("Post card classes:", postCard.className);
+      console.log("Post card data-post-id:", postCard.getAttribute('data-post-id'));
+    }
 
-    console.log("Current like state:", isCurrentlyLiked);
+    if (!postCard) {
+      console.error("Could not find post card container");
+      throw new Error("Post card not found");
+    }
 
-    const result = await AjaxHelper.request(
-      "/online-plaza/posts/api/like.php",
-      {
-        post_id: postId,
+    // Find elements within the button itself
+    const likeIcon = likeButton.querySelector(".like-icon");
+    const likeText = likeButton.querySelector(".like-text");
+    
+    console.log("Like icon found:", !!likeIcon);
+    console.log("Like text found:", !!likeText);
+
+    // Find the like count in the stats section (not inside the button)
+    // Try multiple strategies to find the like count element
+    let likeCountElement = postCard.querySelector(`.like-count[data-post-id="${postId}"]`);
+    
+    // If not found with data attribute, try without it
+    if (!likeCountElement) {
+      const allLikeCounts = postCard.querySelectorAll('.like-count');
+      console.log("All like-count elements in post card:", allLikeCounts.length);
+      
+      // Find the one with matching data-post-id
+      for (let elem of allLikeCounts) {
+        console.log("Checking like-count element:", elem, "data-post-id:", elem.getAttribute('data-post-id'));
+        if (elem.getAttribute('data-post-id') == postId) {
+          likeCountElement = elem;
+          break;
+        }
       }
-    );
+      
+      // If still not found, just use the first like-count in this post card
+      if (!likeCountElement && allLikeCounts.length > 0) {
+        console.log("Using first like-count element as fallback");
+        likeCountElement = allLikeCounts[0];
+      }
+    }
+    
+    console.log("Like count element found:", !!likeCountElement);
+    if (likeCountElement) {
+      console.log("Like count element:", likeCountElement);
+      console.log("Current like count value:", likeCountElement.textContent);
+    }
 
-    console.log("Like result:", result);
+    if (!likeIcon || !likeText) {
+      console.error("Button structure is incorrect");
+      console.error("Button HTML:", likeButton.innerHTML);
+      throw new Error("Like button structure invalid - missing icon or text");
+    }
 
-    if (result.success) {
-      // Update UI based on server response
-      if (result.liked) {
-        likeIcon.classList.replace("far", "fas");
-        likeIcon.classList.add("text-red-500");
-        likeButton.dataset.liked = "true";
+    if (!likeCountElement) {
+      console.error("Like count element not found after all attempts");
+      console.error("Post card HTML:", postCard.innerHTML.substring(0, 1000));
+      throw new Error("Like count element not found");
+    }
+
+    const currentLiked = likeButton.dataset.liked === 'true';
+    console.log("Current like state:", currentLiked);
+
+    try {
+      const result = await AjaxHelper.request(
+        "/online-plaza/posts/api/like.php",
+        {
+          post_id: postId,
+        }
+      );
+
+      console.log("Server response:", result);
+
+      if (result.success) {
+        // Update UI based on server response
+        const isLiked = result.liked;
+        console.log("New like state from server:", isLiked);
+
+        if (isLiked) {
+          // User now likes the post
+          likeIcon.classList.remove("far", "text-gray-600");
+          likeIcon.classList.add("fas", "text-green-500");
+          likeText.classList.remove("text-gray-600");
+          likeText.classList.add("text-green-500");
+          likeButton.dataset.liked = "true";
+        } else {
+          // User no longer likes the post
+          likeIcon.classList.remove("fas", "text-green-500");
+          likeIcon.classList.add("far", "text-gray-600");
+          likeText.classList.remove("text-green-500");
+          likeText.classList.add("text-gray-600");
+          likeButton.dataset.liked = "false";
+        }
+
+        // Update like count
+        if (result.like_count !== undefined) {
+          likeCountElement.textContent = result.like_count;
+          console.log("Like count updated to:", result.like_count);
+        }
+
+        // Show success notification
+        const message = isLiked ? "Post liked!" : "Post unliked!";
+        AjaxHelper.showNotification(message, "success");
+        
+        console.log("=== Like operation completed successfully ===");
+        return result;
       } else {
-        likeIcon.classList.replace("fas", "far");
-        likeIcon.classList.remove("text-red-500");
-        likeButton.dataset.liked = "false";
+        throw new Error(result.message || "Like action failed");
       }
-
-      // Update like count
-      if (result.like_count !== undefined) {
-        likeCount.textContent = result.like_count;
-      }
-
-      // Show appropriate message
-      const message = result.liked ? "Post liked!" : "Post unliked!";
-      AjaxHelper.showNotification(message, "success");
-      return result;
-    } else {
+    } catch (error) {
+      console.error("=== Like operation failed ===");
+      console.error("Error:", error);
       AjaxHelper.showNotification(
-        result.message || "Failed to update like",
+        error.message || "Failed to update like",
         "error"
       );
-      throw new Error(result.message || "Like action failed");
+      throw error;
     }
   }
 }
@@ -277,8 +358,10 @@ function showNotification(message, type) {
   existingNotifications.forEach((notification) => notification.remove());
 
   const notification = document.createElement("div");
-  notification.className = `custom-notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
-    type === "success" ? "bg-green-500" : "bg-red-500"
+  notification.className = `custom-notification fixed top-24 right-6 p-4 rounded-2xl text-white z-50 shadow-2xl backdrop-blur-xl border-2 ${
+    type === "success"
+      ? "bg-gradient-to-r from-green-400 to-emerald-400 border-green-300"
+      : "bg-gradient-to-r from-red-400 to-rose-400 border-red-300"
   }`;
   notification.textContent = message;
 
@@ -286,50 +369,80 @@ function showNotification(message, type) {
 
   // Auto remove after 3 seconds
   setTimeout(() => {
-    notification.remove();
+    if (notification.parentNode) {
+      notification.remove();
+    }
   }, 3000);
 }
 
-// Initialize all event listeners when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOM loaded, initializing all event listeners...");
+  console.log("=== DOM Content Loaded - Initializing ===");
 
-  // 1. Like buttons
+  // 1. LIKE BUTTONS - SIMPLIFIED AND FIXED
   console.log("Initializing like buttons...");
-  document.querySelectorAll(".like-btn").forEach((button) => {
-    button.addEventListener("click", async function () {
-      const postId = this.getAttribute("data-post-id");
-      const likeIcon = this.querySelector(".like-icon");
-      const likeCount = this.parentElement.querySelector(".like-count");
+  
+  const initializeLikeButtons = () => {
+    const likeButtons = document.querySelectorAll(".like-btn");
+    console.log(`Found ${likeButtons.length} like buttons`);
 
-      console.log("Like button clicked for post:", postId);
-      console.log("Current like state:", this.dataset.liked);
+    likeButtons.forEach((button, index) => {
+      const postId = button.getAttribute("data-post-id");
+      console.log(`Button ${index + 1}: Post ID = ${postId}`);
+      
+      // Remove existing listeners by cloning
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+      
+      // Add new listener
+      newButton.addEventListener("click", async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-      // Add visual feedback
-      likeIcon.classList.add("like-animation");
+        console.log(`\n=== Like button clicked for post ${postId} ===`);
 
-      try {
-        await PostInteractions.likePost(postId);
-      } catch (error) {
-        console.error("Like error:", error);
-      } finally {
-        // Remove animation after a short delay
-        setTimeout(() => {
-          likeIcon.classList.remove("like-animation");
-        }, 400);
-      }
+        // Prevent double-clicking
+        if (this.disabled) {
+          console.log("Button disabled, ignoring click");
+          return;
+        }
+
+        this.disabled = true;
+
+        // Add animation
+        const likeIcon = this.querySelector(".like-icon");
+        if (likeIcon) {
+          likeIcon.classList.add("like-animation");
+        }
+
+        try {
+          // Pass the button itself to the likePost method
+          await PostInteractions.likePost(this);
+        } catch (error) {
+          console.error("Like operation error:", error);
+        } finally {
+          // Re-enable button and remove animation
+          setTimeout(() => {
+            if (likeIcon) {
+              likeIcon.classList.remove("like-animation");
+            }
+            this.disabled = false;
+          }, 400);
+        }
+      });
     });
-  });
+  };
+
+  // Initialize like buttons
+  initializeLikeButtons();
 
   // 2. Review forms
   console.log("Initializing review forms...");
   const reviewForm = document.querySelector(".review-form");
   if (reviewForm) {
-    console.log("Review form found, attaching event listener...");
+    console.log("Review form found");
 
     reviewForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      console.log("Review form submitted");
 
       const productId = this.getAttribute("data-product-id");
       const ratingInput = this.querySelector('input[name="rating"]:checked');
@@ -337,15 +450,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const reviewText = this.querySelector(
         'textarea[name="review_text"]'
       ).value.trim();
-
-      console.log(
-        "Form data - Product ID:",
-        productId,
-        "Rating:",
-        rating,
-        "Review text length:",
-        reviewText.length
-      );
 
       if (!rating) {
         AjaxHelper.showNotification("Please select a rating", "error");
@@ -368,8 +472,6 @@ document.addEventListener("DOMContentLoaded", function () {
       submitBtn.disabled = true;
       submitBtn.innerHTML =
         '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
-
-      console.log("Calling ProductInteractions.addReview...");
 
       ProductInteractions.addReview(productId, rating, reviewText).finally(
         () => {
@@ -472,32 +574,41 @@ document.addEventListener("DOMContentLoaded", function () {
             const newComment = document.createElement("div");
             newComment.className = "comment bg-gray-50 p-4 rounded-lg";
             newComment.innerHTML = `
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex items-center">
-                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">
-                                        ${data.comment.username
-                                          .charAt(0)
-                                          .toUpperCase()}
-                                    </div>
-                                    <span class="font-semibold">${
-                                      data.comment.username
-                                    }</span>
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                    ${data.comment.username
+                                      .charAt(0)
+                                      .toUpperCase()}
                                 </div>
-                                <span class="text-gray-500 text-sm">${
-                                  data.comment.created_at
+                                <span class="font-semibold">${
+                                  data.comment.username
                                 }</span>
                             </div>
-                            <p class="text-gray-700">${data.comment.comment}</p>
-                        `;
+                            <span class="text-gray-500 text-sm">${
+                              data.comment.created_at
+                            }</span>
+                        </div>
+                        <p class="text-gray-700">${data.comment.comment}</p>
+                    `;
 
             // Add new comment to top of list
             commentsList.insertBefore(newComment, commentsList.firstChild);
 
             // Update comment count
-            const commentCount = document.querySelector(".comment-count");
-            if (commentCount) {
-              commentCount.textContent = parseInt(commentCount.textContent) + 1;
-            }
+            const postId = formData.get("post_id");
+            const commentCountElements = document.querySelectorAll(
+              `.comment-btn[data-post-id="${postId}"]`
+            );
+            commentCountElements.forEach((element) => {
+              const countSpan =
+                element.parentElement.querySelector(".comment-count");
+              if (countSpan && data.comment_count !== undefined) {
+                countSpan.textContent = data.comment_count;
+              } else if (countSpan) {
+                countSpan.textContent = parseInt(countSpan.textContent) + 1;
+              }
+            });
 
             // Reset form
             this.reset();
@@ -520,5 +631,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  console.log("All event listeners initialized successfully");
+  console.log("=== All event listeners initialized ===");
 });

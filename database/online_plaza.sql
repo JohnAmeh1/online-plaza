@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 12, 2025 at 08:03 PM
+-- Generation Time: Oct 14, 2025 at 01:27 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -35,15 +35,21 @@ CREATE TABLE `activities` (
   `reference_id` int(11) DEFAULT NULL,
   `actor_username` varchar(255) NOT NULL,
   `is_read` tinyint(1) DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `actor_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `activities`
 --
 
-INSERT INTO `activities` (`id`, `user_id`, `activity_type`, `reference_type`, `reference_id`, `actor_username`, `is_read`, `created_at`) VALUES
-(16, 3, 'review', 'product', 14, 'Johnameh', 1, '2025-10-12 13:43:33');
+INSERT INTO `activities` (`id`, `user_id`, `activity_type`, `reference_type`, `reference_id`, `actor_username`, `is_read`, `created_at`, `actor_id`) VALUES
+(16, 3, 'review', 'product', 14, 'Johnameh', 1, '2025-10-12 13:43:33', NULL),
+(17, 3, 'comment', 'post', 5, 'Johnameh', 1, '2025-10-14 05:28:25', NULL),
+(18, 3, 'comment', 'post', 5, 'Johnameh', 1, '2025-10-14 05:35:37', NULL),
+(34, 3, 'like', 'post', 7, 'Johnameh', 1, '2025-10-14 07:05:06', NULL),
+(35, 3, 'like', 'post', 7, 'Johnameh', 1, '2025-10-14 07:05:32', NULL),
+(39, 3, 'like', 'post', 8, 'Johnameh', 1, '2025-10-14 11:03:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -76,6 +82,8 @@ CREATE TABLE `companies` (
   `contact_email` varchar(100) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
+  `whatsapp_url` varchar(255) DEFAULT NULL,
+  `instagram_url` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `subscription_status` enum('active','expired','pending') DEFAULT 'pending',
@@ -86,9 +94,32 @@ CREATE TABLE `companies` (
 -- Dumping data for table `companies`
 --
 
-INSERT INTO `companies` (`id`, `user_id`, `name`, `description`, `logo`, `banner`, `contact_email`, `phone`, `address`, `created_at`, `updated_at`, `subscription_status`, `subscription_expiry`) VALUES
-(1, 1, 'Tech Store', 'Your one-stop shop for all tech gadgets', NULL, NULL, 'contact@techstore.com', '+1234567890', NULL, '2025-10-10 23:40:15', '2025-10-10 23:40:15', 'pending', NULL),
-(2, 3, 'akagami plc', 'yes', '/online-plaza/uploads/logos/68e9dbd19a0c7_1760156625.jpeg', '/online-plaza/uploads/banners/68e9dbd19a751_1760156625.jpg', 'ameh@email.com', '+2349023228272', 'no 4 Emmanuel close, arabroad, kubwa\r\nno 4 Emmanuel close, arabroad, kubwa', '2025-10-11 00:48:37', '2025-10-11 21:53:21', 'active', '2025-11-11 23:53:21');
+INSERT INTO `companies` (`id`, `user_id`, `name`, `description`, `logo`, `banner`, `contact_email`, `phone`, `address`, `whatsapp_url`, `instagram_url`, `created_at`, `updated_at`, `subscription_status`, `subscription_expiry`) VALUES
+(1, 1, 'Tech Store', 'Your one-stop shop for all tech gadgets', NULL, NULL, 'contact@techstore.com', '+1234567890', NULL, NULL, NULL, '2025-10-10 23:40:15', '2025-10-10 23:40:15', 'pending', NULL),
+(2, 3, 'akagami plc', 'yes', '/online-plaza/uploads/logos/68e9dbd19a0c7_1760156625.jpeg', '/online-plaza/uploads/banners/68e9dbd19a751_1760156625.jpg', 'ameh@email.com', '+2349023228272', 'no 4 Emmanuel close, arabroad, kubwa\r\nno 4 Emmanuel close, arabroad, kubwa', 'http://localhost/online-plaza/index.php', 'http://localhost/online-plaza/index.php', '2025-10-11 00:48:37', '2025-10-14 03:46:12', 'active', '2025-11-11 23:53:21');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `company_reviews`
+--
+
+CREATE TABLE `company_reviews` (
+  `id` int(11) NOT NULL,
+  `company_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `rating` int(11) NOT NULL CHECK (`rating` >= 1 and `rating` <= 5),
+  `comment` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `company_reviews`
+--
+
+INSERT INTO `company_reviews` (`id`, `company_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES
+(1, 2, 5, 4, 'great', '2025-10-14 10:20:38', '2025-10-14 10:27:41');
 
 -- --------------------------------------------------------
 
@@ -201,7 +232,9 @@ CREATE TABLE `posts` (
 --
 
 INSERT INTO `posts` (`id`, `company_id`, `title`, `content`, `media_url`, `media_filename`, `media_type`, `created_at`, `updated_at`) VALUES
-(5, 2, 'First Post', 'First Post', '/online-plaza/uploads/posts/68ebd4765abc8_1st.jpg', '68ebd4765abc8_1st.jpg', 'image', '2025-10-12 16:16:54', '2025-10-12 16:16:54');
+(6, 2, 'First Post', 'vvvvvvvv', '/online-plaza/uploads/posts/68ede52d2c7e3_dp.jpeg', '68ede52d2c7e3_dp.jpeg', 'image', '2025-10-14 05:52:45', '2025-10-14 05:52:45'),
+(7, 2, 'First Post', 'vvvvvvvv', '/online-plaza/uploads/posts/68edee81136a6_dp.jpeg', '68edee81136a6_dp.jpeg', 'image', '2025-10-14 06:32:33', '2025-10-14 06:32:33'),
+(8, 2, 'casper', 'qqqqqqqq', '/online-plaza/uploads/posts/68edfc9d38ca2_Complete_Swedish_Course___Lesson_1.mp4', '68edfc9d38ca2_Complete_Swedish_Course___Lesson_1.mp4', 'video', '2025-10-14 07:32:45', '2025-10-14 07:32:45');
 
 -- --------------------------------------------------------
 
@@ -217,6 +250,16 @@ CREATE TABLE `post_comments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `post_comments`
+--
+
+INSERT INTO `post_comments` (`id`, `post_id`, `user_id`, `comment`, `created_at`) VALUES
+(15, 7, 3, 'yes', '2025-10-14 07:20:37'),
+(16, 7, 3, 'yes', '2025-10-14 07:28:46'),
+(17, 8, 3, 'yes', '2025-10-14 10:40:32'),
+(18, 7, 3, 'good', '2025-10-14 10:42:25');
+
 -- --------------------------------------------------------
 
 --
@@ -225,10 +268,19 @@ CREATE TABLE `post_comments` (
 
 CREATE TABLE `post_likes` (
   `id` int(11) NOT NULL,
-  `post_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
+  `post_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `post_likes`
+--
+
+INSERT INTO `post_likes` (`id`, `user_id`, `post_id`, `created_at`) VALUES
+(20, 5, 7, '2025-10-14 07:05:32'),
+(24, 3, 7, '2025-10-14 07:28:50'),
+(26, 5, 8, '2025-10-14 11:03:55');
 
 -- --------------------------------------------------------
 
@@ -242,6 +294,15 @@ CREATE TABLE `post_shares` (
   `user_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `post_shares`
+--
+
+INSERT INTO `post_shares` (`id`, `post_id`, `user_id`, `created_at`) VALUES
+(5, 8, 3, '2025-10-14 10:40:37'),
+(6, 6, 3, '2025-10-14 10:43:25'),
+(7, 7, 3, '2025-10-14 10:43:34');
 
 -- --------------------------------------------------------
 
@@ -281,7 +342,8 @@ CREATE TABLE `products` (
 
 INSERT INTO `products` (`id`, `company_id`, `name`, `description`, `price`, `image_url`, `media_filename`, `media_type`, `stock_quantity`, `category`, `brand`, `weight`, `dimensions`, `color`, `size`, `material`, `warranty`, `shipping_time`, `created_at`, `updated_at`, `platform_fee`, `net_amount`, `fee_percentage`) VALUES
 (15, 2, 'Hhh', 'Fff', 25.00, '', '', 'image', 1, 'home_garden', 'Nike', 12.00, '44', 'Green', '23', 'Nike', '1', NULL, '2025-10-12 17:07:51', '2025-10-12 17:40:33', 1.75, 23.25, 7.00),
-(16, 2, 'Water', 'Ester', 25.00, '', '', 'image', 2, 'electronics', 'Nike', 5.00, '56', 'Blue', '23', 'Gbj', '1', NULL, '2025-10-12 17:07:51', '2025-10-12 17:07:51', 1.75, 23.25, 7.00);
+(16, 2, 'Water', 'Ester', 25.00, '', '', 'image', 2, 'electronics', 'Nike', 5.00, '56', 'Blue', '23', 'Gbj', '1', NULL, '2025-10-12 17:07:51', '2025-10-12 17:07:51', 1.75, 23.25, 7.00),
+(17, 2, 'Salah', 'tttttttttttt', 250000.00, '/online-plaza/uploads/products/68edc52bb21a2_agile_image.jpeg', '68edc52bb21a2_agile_image.jpeg', 'image', 8, 'electronics', 'Nike', 122.00, '125', 'blue', '25', 'Ankara', '1 year', NULL, '2025-10-14 03:36:11', '2025-10-14 03:36:11', 17500.00, 232500.00, 7.00);
 
 -- --------------------------------------------------------
 
@@ -297,6 +359,13 @@ CREATE TABLE `product_reviews` (
   `review_text` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `product_reviews`
+--
+
+INSERT INTO `product_reviews` (`id`, `product_id`, `user_id`, `rating`, `review_text`, `created_at`) VALUES
+(7, 17, 3, 5, 'very good', '2025-10-14 05:17:41');
 
 -- --------------------------------------------------------
 
@@ -491,6 +560,14 @@ ALTER TABLE `companies`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `company_reviews`
+--
+ALTER TABLE `company_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_company_user` (`company_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
@@ -540,8 +617,8 @@ ALTER TABLE `post_comments`
 --
 ALTER TABLE `post_likes`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_like` (`post_id`,`user_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD UNIQUE KEY `unique_like` (`user_id`,`post_id`),
+  ADD KEY `post_id` (`post_id`);
 
 --
 -- Indexes for table `post_shares`
@@ -626,7 +703,7 @@ ALTER TABLE `wallet_transactions`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `cart`
@@ -639,6 +716,12 @@ ALTER TABLE `cart`
 --
 ALTER TABLE `companies`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `company_reviews`
+--
+ALTER TABLE `company_reviews`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -668,37 +751,37 @@ ALTER TABLE `platform_earnings`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `post_comments`
 --
 ALTER TABLE `post_comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=135;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `post_shares`
 --
 ALTER TABLE `post_shares`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `product_reviews`
 --
 ALTER TABLE `product_reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `transactions`
@@ -760,6 +843,13 @@ ALTER TABLE `companies`
   ADD CONSTRAINT `companies_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `company_reviews`
+--
+ALTER TABLE `company_reviews`
+  ADD CONSTRAINT `company_reviews_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `company_reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
@@ -802,8 +892,8 @@ ALTER TABLE `post_comments`
 -- Constraints for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  ADD CONSTRAINT `post_likes_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `post_likes_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `post_likes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `post_likes_ibfk_2` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `post_shares`

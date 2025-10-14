@@ -314,8 +314,9 @@ require_once '../includes/header.php';
             <?php endif; ?>
 
             <!-- Review Form -->
+            <!-- Review Form -->
             <?php if ($currentUser && !$userHasReviewed): ?>
-                <form method="POST" action="/online-plaza/products/add_review.php" class="review-form mb-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl">
+                <form method="POST" class="review-form mb-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl" data-product-id="<?php echo $productId; ?>">
                     <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Write a Review</h3>
                     <div class="mb-4">

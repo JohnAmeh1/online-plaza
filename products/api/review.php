@@ -14,22 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Get POST data
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
-
-// Fallback to regular POST if JSON fails
-if (json_last_error() !== JSON_ERROR_NONE) {
-    $data = $_POST;
-}
-
-$productId = isset($data['product_id']) ? (int)$data['product_id'] : 0;
-$rating = isset($data['rating']) ? (int)$data['rating'] : 0;
-$reviewText = isset($data['review_text']) ? trim($data['review_text']) : '';
+$productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+$rating = isset($_POST['rating']) ? (int)$_POST['rating'] : 0;
+$reviewText = isset($_POST['review_text']) ? trim($_POST['review_text']) : '';
 $currentUser = getCurrentUser();
 $userId = $currentUser['id'];
 $actorUsername = $currentUser['username'];
-
-error_log("Review submission - Product: $productId, Rating: $rating, User: $userId");
 
 // Validation
 if ($productId <= 0) {
@@ -71,17 +61,17 @@ try {
     // Insert review
     $stmt = $pdo->prepare("INSERT INTO product_reviews (product_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)");
     if ($stmt->execute([$productId, $userId, $rating, $reviewText])) {
-        
-        // Get company owner's user_id (the one who should be notified)
+
+        // Get company owner's user_id
         $stmt = $pdo->prepare("SELECT user_id FROM companies WHERE id = ?");
         $stmt->execute([$product['company_id']]);
         $companyOwnerId = $stmt->fetchColumn();
 
-        // Only create activity if we found the company owner and it's not the current user reviewing their own product
+        // Create activity if not reviewing own product
         if ($companyOwnerId && $companyOwnerId != $userId) {
             createActivity($companyOwnerId, 'review', 'product', $productId, $actorUsername);
         }
-        
+
         // Get updated review stats
         $stmt = $pdo->prepare("
             SELECT 
@@ -92,12 +82,12 @@ try {
         ");
         $stmt->execute([$productId]);
         $stats = $stmt->fetch();
-        
+
         // Get user info for response
         $stmt = $pdo->prepare("SELECT username, first_name, last_name FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Review submitted successfully',
@@ -109,7 +99,7 @@ try {
                 'last_name' => $user['last_name'],
                 'rating' => $rating,
                 'review_text' => $reviewText,
-                'created_at' => date('F j, Y')
+                'created_at' => date('F j, Y \a\t g:i A')
             ]
         ]);
     } else {
@@ -119,4 +109,3 @@ try {
     error_log("Review submission error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
-?>

@@ -8,25 +8,41 @@ if (!isLoggedIn()) {
 
 $currentUser = getCurrentUser();
 
-// Get activities
+// Debug: Check current user
+error_log("Current user ID: " . $currentUser['id'] . ", Username: " . $currentUser['username']);
+
 $stmt = $pdo->prepare("
-    SELECT a.*, 
-           u.username as actor_username,
+    SELECT a.*,
            CASE 
                WHEN a.reference_type = 'post' THEN (SELECT title FROM posts WHERE id = a.reference_id)
                WHEN a.reference_type = 'product' THEN (SELECT name FROM products WHERE id = a.reference_id)
                ELSE NULL
            END as reference_title
     FROM activities a 
-    LEFT JOIN users u ON a.user_id = u.id 
     WHERE a.user_id = ? 
     ORDER BY a.created_at DESC
+    LIMIT 50
 ");
 $stmt->execute([$currentUser['id']]);
 $activities = $stmt->fetchAll();
 
+// Debug: Check activities data
+error_log("Found " . count($activities) . " activities");
+foreach ($activities as $index => $activity) {
+    error_log("Activity $index - Type: " . $activity['activity_type'] . 
+              ", Actor ID: " . $activity['actor_id'] . 
+              ", Actor Username: " . $activity['actor_username'] .
+              ", Reference: " . $activity['reference_title']);
+}
+
 // Mark all as read
-$pdo->prepare("UPDATE activities SET is_read = TRUE WHERE user_id = ?")->execute([$currentUser['id']]);
+$pdo->prepare("UPDATE activities SET is_read = TRUE WHERE user_id = ? AND is_read = FALSE")
+    ->execute([$currentUser['id']]);
+
+// Get unread count for badge
+$stmt = $pdo->prepare("SELECT COUNT(*) as unread_count FROM activities WHERE user_id = ? AND is_read = FALSE");
+$stmt->execute([$currentUser['id']]);
+$unreadCount = $stmt->fetch()['unread_count'];
 ?>
 
 <?php require_once '../includes/header.php'; ?>
@@ -34,8 +50,15 @@ $pdo->prepare("UPDATE activities SET is_read = TRUE WHERE user_id = ?")->execute
 <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Activities & Notifications</h1>
-            <span class="text-gray-500"><?php echo count($activities); ?> activities</span>
+            <h1 class="text-2xl font-bold text-gray-900">Activities</h1>
+            <div class="flex items-center space-x-4">
+                <?php if ($unreadCount > 0): ?>
+                    <span class="bg-red-500 text-white text-sm px-2 py-1 rounded-full">
+                        <?php echo $unreadCount; ?> unread
+                    </span>
+                <?php endif; ?>
+                <span class="text-gray-500"><?php echo count($activities); ?> activities</span>
+            </div>
         </div>
 
         <?php if ($activities): ?>
@@ -76,22 +99,31 @@ $pdo->prepare("UPDATE activities SET is_read = TRUE WHERE user_id = ?")->execute
                         <div class="flex-1">
                             <p class="text-gray-800">
                                 <?php
+                                $actorName = 'Someone';
+                                
+                                // Use the actor_username directly from the activities table
+                                if (!empty($activity['actor_username'])) {
+                                    $actorName = htmlspecialchars($activity['actor_username']);
+                                } elseif ($activity['actor_id']) {
+                                    $actorName = 'User #' . $activity['actor_id'];
+                                }
+                                
                                 $message = '';
                                 switch ($activity['activity_type']) {
                                     case 'like':
-                                        $message = "<strong>{$activity['actor_username']}</strong> liked your post";
+                                        $message = "<strong>{$actorName}</strong> liked your post";
                                         break;
                                     case 'comment':
-                                        $message = "<strong>{$activity['actor_username']}</strong> commented on your post";
+                                        $message = "<strong>{$actorName}</strong> commented on your post";
                                         break;
                                     case 'share':
-                                        $message = "<strong>{$activity['actor_username']}</strong> shared your post";
+                                        $message = "<strong>{$actorName}</strong> shared your post";
                                         break;
                                     case 'review':
-                                        $message = "<strong>{$activity['actor_username']}</strong> reviewed your product";
+                                        $message = "<strong>{$actorName}</strong> reviewed your product";
                                         break;
                                     default:
-                                        $message = "New activity from <strong>{$activity['actor_username']}</strong>";
+                                        $message = "New activity from <strong>{$actorName}</strong>";
                                 }
                                 
                                 if ($activity['reference_title']) {
@@ -104,11 +136,13 @@ $pdo->prepare("UPDATE activities SET is_read = TRUE WHERE user_id = ?")->execute
                             <p class="text-gray-500 text-sm mt-1">
                                 <?php echo date('F j, Y \a\t g:i A', strtotime($activity['created_at'])); ?>
                             </p>
+                            
+                        
                         </div>
                         
                         <?php if (!$activity['is_read']): ?>
                             <div class="flex-shrink-0">
-                                <span class="inline-block w-3 h-3 bg-blue-500 rounded-full"></span>
+                                <span class="inline-block w-3 h-3 bg-blue-500 rounded-full" title="Unread"></span>
                             </div>
                         <?php endif; ?>
                     </div>

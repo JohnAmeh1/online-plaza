@@ -1,16 +1,23 @@
-
 class AutoRefreshManager {
     constructor() {
-        this.refreshInterval = 30000; // 5 seconds
-        this.inactivityTimeout = 60000; // 20 seconds
+        // this.refreshInterval = 40000; // 30 seconds
+        this.inactivityTimeout = 120000; // 2 minutes (fixed from incorrect comment)
         this.refreshTimer = null;
         this.inactivityTimer = null;
         this.lastActivity = Date.now();
+        this.isEnabled = true;
         
         this.init();
     }
 
     init() {
+        // Check if we should enable auto-refresh
+        if (!this.shouldEnable()) {
+            console.log('AutoRefreshManager disabled for this page');
+            this.isEnabled = false;
+            return;
+        }
+
         this.setupRefreshTimer();
         this.setupInactivityListener();
         this.setupInactivityTimer();
@@ -18,7 +25,26 @@ class AutoRefreshManager {
         console.log('AutoRefreshManager initialized');
     }
 
+    shouldEnable() {
+        // Don't initialize on certain pages
+        const excludedPages = [
+            '/online-plaza/auth/',
+            '/online-plaza/company/edit.php',
+            '/online-plaza/profile/edit.php',
+            '/online-plaza/posts/create.php',
+            '/online-plaza/posts/index.php',
+            '/online-plaza/posts/edit.php'
+        ];
+        
+        const currentPath = window.location.pathname;
+        const isExcluded = excludedPages.some(page => currentPath.includes(page));
+        
+        return !isExcluded;
+    }
+
     setupRefreshTimer() {
+        if (!this.isEnabled) return;
+
         // Clear existing timer
         if (this.refreshTimer) {
             clearInterval(this.refreshTimer);
@@ -31,6 +57,8 @@ class AutoRefreshManager {
     }
 
     setupInactivityListener() {
+        if (!this.isEnabled) return;
+
         // Events that reset inactivity timer
         const activityEvents = [
             'mousemove', 'mousedown', 'keypress', 
@@ -38,10 +66,12 @@ class AutoRefreshManager {
             'submit', 'input'
         ];
 
+        const resetActivity = () => {
+            this.resetInactivityTimer();
+        };
+
         activityEvents.forEach(event => {
-            document.addEventListener(event, () => {
-                this.resetInactivityTimer();
-            }, { passive: true });
+            document.addEventListener(event, resetActivity, { passive: true });
         });
 
         // Also track visibility changes
@@ -50,13 +80,19 @@ class AutoRefreshManager {
                 this.resetInactivityTimer();
             }
         });
+
+        // Store references for cleanup
+        this.activityHandler = resetActivity;
     }
 
     setupInactivityTimer() {
+        if (!this.isEnabled) return;
         this.resetInactivityTimer();
     }
 
     resetInactivityTimer() {
+        if (!this.isEnabled) return;
+
         this.lastActivity = Date.now();
         
         // Clear existing inactivity timer
@@ -71,8 +107,8 @@ class AutoRefreshManager {
     }
 
     refreshPage() {
-        // Only refresh if page is visible and user is active
-        if (!document.hidden && this.isUserActive()) {
+        // Only refresh if page is visible, user is active, and manager is enabled
+        if (this.isEnabled && !document.hidden && this.isUserActive()) {
             console.log('Auto-refreshing page...');
             
             // Use location.reload for full refresh
@@ -81,17 +117,21 @@ class AutoRefreshManager {
     }
 
     handleInactivity() {
+        if (!this.isEnabled) return;
+
         const timeSinceLastActivity = Date.now() - this.lastActivity;
         
         if (timeSinceLastActivity >= this.inactivityTimeout && !document.hidden) {
-            console.log('User inactive for 20 seconds, reloading page...');
+            console.log('User inactive, reloading page...');
             
             // Show a subtle notification (optional)
             this.showInactivityNotification();
             
             // Reload after a brief delay to show notification
             setTimeout(() => {
-                location.reload();
+                if (this.isEnabled) {
+                    location.reload();
+                }
             }, 1000);
         }
     }
@@ -125,6 +165,7 @@ class AutoRefreshManager {
 
     // Public method to manually reset timers
     resetAllTimers() {
+        if (!this.isEnabled) return;
         this.resetInactivityTimer();
         this.setupRefreshTimer();
     }
@@ -136,36 +177,46 @@ class AutoRefreshManager {
         this.resetAllTimers();
     }
 
+    // Public method to enable/disable the manager
+    setEnabled(enabled) {
+        this.isEnabled = enabled;
+        if (enabled) {
+            this.resetAllTimers();
+        } else {
+            this.destroyTimers();
+        }
+    }
+
     // Public method to destroy the manager
     destroy() {
-        if (this.refreshTimer) {
-            clearInterval(this.refreshTimer);
-        }
-        if (this.inactivityTimer) {
-            clearTimeout(this.inactivityTimer);
+        this.isEnabled = false;
+        this.destroyTimers();
+        
+        // Remove event listeners
+        if (this.activityHandler) {
+            const activityEvents = [
+                'mousemove', 'mousedown', 'keypress', 
+                'scroll', 'touchstart', 'click',
+                'submit', 'input'
+            ];
+            
+            activityEvents.forEach(event => {
+                document.removeEventListener(event, this.activityHandler);
+            });
         }
         
         console.log('AutoRefreshManager destroyed');
     }
-}
 
-// Initialize auto-refresh manager
-let autoRefreshManager;
-
-function initializeAutoRefresh() {
-    // Don't initialize on certain pages
-    const excludedPages = [
-        '/online-plaza/auth/',
-        '/online-plaza/company/edit.php',
-        '/online-plaza/posts/create.php',
-        '/online-plaza/posts/edit.php'
-    ];
-    
-    const currentPath = window.location.pathname;
-    const isExcluded = excludedPages.some(page => currentPath.includes(page));
-    
-    if (!isExcluded) {
-        autoRefreshManager = new AutoRefreshManager();
+    destroyTimers() {
+        if (this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+            this.refreshTimer = null;
+        }
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer);
+            this.inactivityTimer = null;
+        }
     }
 }
 
@@ -176,36 +227,18 @@ function initializeSmartAutoRefresh() {
     // Different configurations for different page types
     const pageConfigs = {
         // Dashboard pages - frequent updates
-        'dashboard': { refresh: 30000, inactivity: 60000 },
+        'dashboard': { refresh: 30000, inactivity: 120000 },
         // Activity pages - frequent updates
-        'activities': { refresh: 30000, inactivity: 60000 },
-        // Post feeds - moderate updates
-        'posts/index': { refresh: 30000, inactivity: 60000 },
-        // Product pages - less frequent
-        'products': { refresh: 30000, inactivity: 60000 },
+        'activities': { refresh: 30000, inactivity: 120000 },
+        // Post feeds - less frequent updates (fixed intervals)
+        'posts/index': { refresh: 60000, inactivity: 120000 },
+        // Product pages - moderate updates
+        'products': { refresh: 45000, inactivity: 180000 },
         // View pages - moderate updates
-        'view': { refresh: 30000, inactivity: 60000 },
+        'view': { refresh: 40000, inactivity: 150000 },
         // Default configuration
-        'default': { refresh: 30000, inactivity: 60000 }
+        'default': { refresh: 40000, inactivity: 120000 }
     };
-
-    // Pages where auto-refresh should be disabled
-    const disabledPages = [
-        '/online-plaza/auth/',
-        '/online-plaza/company/edit.php',
-        '/online-plaza/posts/create.php',
-        '/online-plaza/posts/edit.php',
-        '/online-plaza/products/create.php',
-        '/online-plaza/products/edit.php'
-    ];
-
-    // Check if current page is disabled
-    const isDisabled = disabledPages.some(page => currentPath.includes(page));
-    
-    if (isDisabled) {
-        console.log('Auto-refresh disabled for this page');
-        return;
-    }
 
     // Determine which configuration to use
     let config = pageConfigs.default;
@@ -217,21 +250,57 @@ function initializeSmartAutoRefresh() {
         }
     }
 
-    // Initialize with appropriate configuration
-    autoRefreshManager = new AutoRefreshManager();
-    autoRefreshManager.updateIntervals(config.refresh, config.inactivity);
+    // Initialize the manager
+    const manager = new AutoRefreshManager();
+    
+    // Update with appropriate configuration
+    manager.updateIntervals(config.refresh, config.inactivity);
     
     console.log(`AutoRefreshManager initialized for ${currentPath} - Refresh: ${config.refresh}ms, Inactivity: ${config.inactivity}ms`);
+    // console.log(`AutoRefreshManager initialized for ${currentPath} - Inactivity: ${config.inactivity}ms`);
+    
+    return manager;
+}
+
+// Global instance management
+let autoRefreshManager = null;
+
+function initializeAutoRefresh() {
+    if (autoRefreshManager) {
+        autoRefreshManager.destroy();
+    }
+    
+    autoRefreshManager = initializeSmartAutoRefresh();
+}
+
+function destroyAutoRefresh() {
+    if (autoRefreshManager) {
+        autoRefreshManager.destroy();
+        autoRefreshManager = null;
+    }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AutoRefreshManager, initializeAutoRefresh, initializeSmartAutoRefresh };
+    module.exports = { 
+        AutoRefreshManager, 
+        initializeAutoRefresh, 
+        initializeSmartAutoRefresh,
+        destroyAutoRefresh 
+    };
 }
 
 // Auto-initialize when DOM is loaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSmartAutoRefresh);
+    document.addEventListener('DOMContentLoaded', initializeAutoRefresh);
 } else {
-    initializeSmartAutoRefresh();
+    initializeAutoRefresh();
 }
+
+// Also reinitialize when page becomes visible again
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !autoRefreshManager) {
+        // Reinitialize if manager was destroyed but page is now visible
+        initializeAutoRefresh();
+    }
+});
