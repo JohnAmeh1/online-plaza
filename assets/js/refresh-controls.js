@@ -10,16 +10,13 @@ class RefreshControls {
     this.setupEventListeners();
   }
 
-
   createControlPanel() {
     this.controlPanel = document.createElement("div");
     this.controlPanel.className =
       "fixed top-12 right-4 bg-white rounded-xl shadow-2xl p-5 z-40 border border-gray-200 max-w-xs";
     this.controlPanel.innerHTML = `
         <div class="space-y-5">
-            
             <div class="flex items-center justify-between">
-            
                 <h3 class="text-lg font-bold text-gray-800">Auto Refresh</h3>
                 <div class="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
             </div>
@@ -37,7 +34,7 @@ class RefreshControls {
             <p class="text-sm text-gray-600">Page will refresh after 2 minutes of inactivity</p>
 
             <!-- Refresh Now Button -->
-            <button class="w-full py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:via-yellow-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <button id="manualRefresh" class="w-full py-3 px-4 rounded-xl font-medium text-white bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:via-yellow-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                 Refresh Now
             </button>
         </div>
@@ -58,33 +55,30 @@ class RefreshControls {
       document.head.appendChild(style);
     }
 
+    // Append to body BEFORE setting up event listeners
     document.body.appendChild(this.controlPanel);
   }
 
   setupEventListeners() {
-    // Toggle auto-refresh
-    document.getElementById("refreshToggle").addEventListener("change", (e) => {
-      this.toggleAutoRefresh(e.target.checked);
-    });
-
-    // // Change refresh interval
-    // document
-    //   .getElementById("refreshInterval")
-    //   .addEventListener("change", (e) => {
-    //     this.changeRefreshInterval(parseInt(e.target.value));
-    //   });
-
-    // Manual refresh
-    document.getElementById("manualRefresh").addEventListener("click", () => {
-      this.manualRefresh();
-    });
-
     // Close panel
-    document
-      .getElementById("closeRefreshControls")
-      .addEventListener("click", () => {
+    const closeBtn = document.getElementById("closeRefreshControls");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
         this.hideControlPanel();
       });
+    } else {
+      console.warn("Close button not found");
+    }
+
+    // Manual refresh
+    const manualRefreshBtn = document.getElementById("manualRefresh");
+    if (manualRefreshBtn) {
+      manualRefreshBtn.addEventListener("click", () => {
+        this.manualRefresh();
+      });
+    } else {
+      console.warn("Manual refresh button not found");
+    }
 
     // Keyboard shortcut: Ctrl + R to show/hide controls
     document.addEventListener("keydown", (e) => {
@@ -97,9 +91,9 @@ class RefreshControls {
 
   toggleAutoRefresh(enabled) {
     this.isEnabled = enabled;
-    if (enabled) {
+    if (enabled && autoRefreshManager) {
       autoRefreshManager.resetAllTimers();
-    } else {
+    } else if (autoRefreshManager) {
       autoRefreshManager.destroy();
     }
   }
@@ -115,15 +109,21 @@ class RefreshControls {
   }
 
   toggleControlPanel() {
-    this.controlPanel.classList.toggle("hidden");
+    if (this.controlPanel) {
+      this.controlPanel.classList.toggle("hidden");
+    }
   }
 
   hideControlPanel() {
-    this.controlPanel.classList.add("hidden");
+    if (this.controlPanel) {
+      this.controlPanel.classList.add("hidden");
+    }
   }
 
   showControlPanel() {
-    this.controlPanel.classList.remove("hidden");
+    if (this.controlPanel) {
+      this.controlPanel.classList.remove("hidden");
+    }
   }
 }
 
@@ -132,8 +132,12 @@ let refreshControls;
 
 function initializeRefreshControls() {
   // Only initialize on pages where auto-refresh is active
-  if (autoRefreshManager) {
+  if (typeof autoRefreshManager !== "undefined" && autoRefreshManager) {
     refreshControls = new RefreshControls();
+  } else {
+    console.warn(
+      "autoRefreshManager not found - Refresh controls not initialized"
+    );
   }
 }
 

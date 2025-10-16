@@ -1,0 +1,29 @@
+{
+  "short_name": "Martly",
+  "name": "Martly - Your Digital Marketplace",
+  "description": "A one-stop online marketplace for all your shopping needs. Discover a wide range of products, unbeatable deals, and a seamless shopping experience.",
+  "icons": [
+    {
+      "src": "/online-plaza/pwa/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/online-plaza/pwa/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/online-plaza/index.php?source=pwa",
+  "background_color": "#FFFFFF",
+  "display": "standalone",
+  "scope": "/online-plaza/",
+  "theme_color": "#4F46E5",
+  "orientation": "any",
+  "categories": [
+    "shopping",
+    "business"
+  ]
+}

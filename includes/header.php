@@ -29,43 +29,71 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Plaza - Your Digital Marketplace</title>
+    <title>Martly - Your Digital Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/online-plaza/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" href="../assets/martly.svg">
     <script src="/online-plaza/assets/js/auto-refresh.js"></script>
 
+    <!-- Fix PWA manifest and icons -->
+    <link rel="manifest" href="/online-plaza/pwa/manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="/online-plaza/pwa/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/online-plaza/pwa/icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="/online-plaza/pwa/icons/icon-192x192.png">
+
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/online-plaza/pwa/manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Martly">
+    <link rel="apple-touch-icon" href="/online-plaza/pwa/icons/icon-192x192.png">
+
     <style>
-        .cart-badge {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: linear-gradient(135deg, #ef4444, #ec4899);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
-            font-weight: bold;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* PWA Loading Animation */
+        .pwa-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid white;
-            z-index: 10;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.3s;
         }
 
-        .cart-icon {
-            position: relative;
-            transition: all 0.3s ease;
+        .pwa-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
-        .cart-icon:hover {
-            transform: scale(1.1);
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .cart-pulse {
-            animation: pulse 2s infinite;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .notification-badge {
@@ -382,6 +410,27 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                             <span>Sign Up</span>
                         </a>
                     <?php endif; ?>
+                    <!-- Install Button - Always visible for testing -->
+                    <div class="hidden md:flex items-center" id="install-button-container">
+                        <button id="install-martly-btn" class="ml-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2">
+                            <i class="fas fa-download"></i>
+                            <span>Install App</span>
+                        </button>
+                    </div>
+
+                    <!-- Mobile install badge -->
+                    <div class="md:hidden flex items-center" id="mobile-install-container">
+                        <button id="pwa-install-badge" class="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+
+                    <script>
+                        // Force show buttons for testing
+                        document.addEventListener('DOMContentLoaded', function() {
+                            console.log('Install buttons should be visible now');
+                        });
+                    </script>
                 </div>
 
                 <!-- Mobile Menu Button -->

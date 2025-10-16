@@ -118,8 +118,8 @@ function handleImageUpload($file, $type, $currentPath = '')
     }
 
     // Specific dimension checks
-    if ($type === 'logos' && ($imageInfo[0] > 1000 || $imageInfo[1] > 1000)) {
-        throw new Exception('Logo dimensions should not exceed 1000x1000 pixels.');
+    if ($type === 'logos' && ($imageInfo[0] > 2000 || $imageInfo[1] > 2000)) {
+        throw new Exception('Logo dimensions should not exceed 2000x2000 pixels.');
     }
 
     if ($type === 'banners' && ($imageInfo[0] > 2000 || $imageInfo[1] > 800)) {

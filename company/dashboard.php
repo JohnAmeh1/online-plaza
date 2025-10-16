@@ -272,7 +272,9 @@ $unreadNotifications = $notificationStmt->fetchColumn();
                     </div>
                     <div class="ml-4">
                         <p class="text-xs sm:text-sm font-semibold text-slate-600 mb-1">Wallet Balance</p>
+                        <p class="text-sm sm:text-sm font-normal text-zinc-600 mb-1">Click to manage wallet</p>
                         <p class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">₦<?php echo number_format($walletBalance, 2); ?></p>
+                                                
                     </div>
                 </div>
             </div>

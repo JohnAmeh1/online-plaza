@@ -65,9 +65,9 @@ if (isLoggedIn()) {
                             </div>
                         </div>
 
-                        <button class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full">
+                        <!-- <button class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full">
                             <i class="fas fa-ellipsis-h"></i>
-                        </button>
+                        </button> -->
                     </div>
 
                     <!-- Post Content -->
@@ -448,8 +448,7 @@ if (isLoggedIn()) {
                                 </div>
                                 <div class="flex space-x-4 text-xs text-gray-500 mt-2 px-1">
                                     <span class="font-medium">${formatTime(comment.created_at)}</span>
-                                    <button class="hover:text-blue-500 transition-colors font-semibold">Like</button>
-                                    <button class="hover:text-blue-500 transition-colors font-semibold">Reply</button>
+                                    
                                 </div>
                             </div>
                         </div>

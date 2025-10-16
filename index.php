@@ -49,6 +49,7 @@ $featuredProducts = array_slice($featuredProductsAll, 0, 3);
         <div class="hidden md:block flex items-center justify-center w-80 h-80">
             <i class="fas fa-store text-[8rem] text-white/80 drop-shadow-lg bg-gradient-to-br from-green-400 to-blue-500 rounded-3xl p-8"></i>
         </div>
+
     </section>
 
     <!-- Recent Posts Section -->
@@ -146,13 +147,42 @@ $featuredProducts = array_slice($featuredProductsAll, 0, 3);
 
     <!-- CTA Section -->
     <?php if (!isLoggedIn()): ?>
-    <section class="bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl p-10 text-white text-center shadow-xl">
-        <h2 class="text-4xl font-extrabold mb-4">Ready to Join Our Plaza?</h2>
-        <p class="text-2xl mb-8 max-w-2xl mx-auto font-light">Sign up today to start shopping or become a vendor and open your own online store!</p>
-        <a href="/online-plaza/auth/register.php" class="bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-xl hover:bg-gray-100 transition duration-300 shadow">Get Started Now</a>
-    </section>
+        <section class="bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl p-10 text-white text-center shadow-xl">
+            <h2 class="text-4xl font-extrabold mb-4">Ready to Join Our Plaza?</h2>
+            <p class="text-2xl mb-8 max-w-2xl mx-auto font-light">Sign up today to start shopping or become a vendor and open your own online store!</p>
+            <a href="/online-plaza/auth/register.php" class="bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-xl hover:bg-gray-100 transition duration-300 shadow">Get Started Now</a>
+        </section>
     <?php endif; ?>
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+<!-- Add this script in your header or before closing body tag -->
 
+<script>
+    // Test if buttons are clickable
+    document.addEventListener('DOMContentLoaded', function() {
+        const testBtn = document.getElementById('install-martly-btn');
+        if (testBtn) {
+            console.log('✅ Install button found and should be clickable');
+            testBtn.addEventListener('click', function() {
+                console.log('✅ Install button clicked successfully!');
+                alert('Install button is working! The PWA prompt should appear if requirements are met.');
+            });
+        }
+    });
+
+    // Register Service Worker with correct path
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/online-plaza/sw.js', {
+                    scope: '/online-plaza/'
+                })
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
+</script>

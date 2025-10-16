@@ -18,7 +18,7 @@ $success = '';
 // Paystack Configuration - Use test keys for development
 
 $paystackPublicKey = 'pk_test_fdeb97ce15dc119e28cc589fcb24fac669b14f81'; // Your Paystack public key
-$paystackSecretKey = 'c';
+$paystackSecretKey = 'sk_test_b91e0557f6dca556b24425e6f6683cba1e86c25b';
 // Initialize security
 $security = new URLSecurity();
 
@@ -74,7 +74,6 @@ try {
     ");
     $stmt->execute([$user_id]);
     $paymentMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (PDOException $e) {
     $error = "Error loading wallet: " . $e->getMessage();
 } catch (Exception $e) {
@@ -84,22 +83,22 @@ try {
 // Handle Paystack callback for deposits
 if (isset($_GET['reference']) && isset($_GET['type']) && $_GET['type'] === 'deposit') {
     $reference = $_GET['reference'];
-    
+
     try {
         // Verify transaction with Paystack
         $verification = verifyPaystackTransaction($reference, $paystackSecretKey);
-        
+
         if ($verification['status'] === true && $verification['data']['status'] === 'success') {
             $amount = $verification['data']['amount'] / 100; // Convert from kobo to naira
-            
+
             // Check if we've already processed this transaction
             $stmt = $pdo->prepare("SELECT id FROM wallet_transactions WHERE paystack_reference = ?");
             $stmt->execute([$reference]);
-            
+
             if ($stmt->rowCount() === 0) {
                 // Start transaction
                 $pdo->beginTransaction();
-                
+
                 // Add to wallet balance
                 $stmt = $pdo->prepare("
                     UPDATE wallet 
@@ -107,7 +106,7 @@ if (isset($_GET['reference']) && isset($_GET['type']) && $_GET['type'] === 'depo
                     WHERE user_id = ?
                 ");
                 $stmt->execute([$amount, $user_id]);
-                
+
                 // Record transaction
                 $stmt = $pdo->prepare("
                     INSERT INTO wallet_transactions 
@@ -115,9 +114,9 @@ if (isset($_GET['reference']) && isset($_GET['type']) && $_GET['type'] === 'depo
                     VALUES (?, ?, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', ?, NOW())
                 ");
                 $stmt->execute([$wallet_id, $amount, $reference]);
-                
+
                 $pdo->commit();
-                
+
                 $success = "₦" . number_format($amount, 2) . " successfully added to your wallet!";
                 header("Location: wallet.php?success=" . urlencode($success));
                 exit;
@@ -144,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['withdraw_funds'])) {
             $amount = floatval($_POST['amount']);
             $bank_account_id = $_POST['bank_account_id'];
-            
+
             if ($amount < 100) {
                 $error = "Minimum withdrawal amount is ₦100";
             } elseif ($amount > $walletBalance) {
@@ -157,17 +156,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare("SELECT * FROM payment_methods WHERE id = ? AND user_id = ?");
                     $stmt->execute([$bank_account_id, $user_id]);
                     $bankAccount = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
+
                     if (!$bankAccount) {
                         throw new Exception("Selected bank account not found");
                     }
-                    
+
                     // Generate transaction reference
                     $transaction_ref = 'WDL_' . time() . '_' . rand(1000, 9999);
-                    
+
                     // Start transaction
                     $pdo->beginTransaction();
-                    
+
                     // Deduct from wallet immediately
                     $stmt = $pdo->prepare("
                         UPDATE wallet 
@@ -175,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         WHERE id = ?
                     ");
                     $stmt->execute([$amount, $wallet_id]);
-                    
+
                     // Create withdrawal transaction
                     $stmt = $pdo->prepare("
                         INSERT INTO wallet_transactions 
@@ -190,9 +189,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $bankAccount['account_name'],
                         $transaction_ref
                     ]);
-                    
+
                     $transaction_id = $pdo->lastInsertId();
-                    
+
                     // For demo purposes, we'll simulate successful transfer
                     // In production, uncomment the Paystack transfer code
                     /*
@@ -205,10 +204,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $paystackSecretKey
                     );
                     */
-                    
+
                     // Simulate successful transfer for demo
                     $transfer_result = ['success' => true, 'data' => ['reference' => 'DEMO_' . $transaction_ref]];
-                    
+
                     if ($transfer_result['success']) {
                         // Update transaction status to completed
                         $stmt = $pdo->prepare("
@@ -217,12 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id = ?
                         ");
                         $stmt->execute([$transfer_result['data']['reference'] ?? $transfer_result['data']['transfer_code'], $transaction_id]);
-                        
+
                         $pdo->commit();
-                        
+
                         // Update local balance
                         $walletBalance -= $amount;
-                        
+
                         $success = "Withdrawal successful! ₦" . number_format($amount, 2) . " has been sent to your bank account.";
                     } else {
                         // Refund wallet balance if transfer fails
@@ -232,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id = ?
                         ");
                         $stmt->execute([$amount, $wallet_id]);
-                        
+
                         // Update transaction status to failed
                         $stmt = $pdo->prepare("
                             UPDATE wallet_transactions 
@@ -240,15 +239,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id = ?
                         ");
                         $stmt->execute([$transfer_result['message'], $transaction_id]);
-                        
+
                         $pdo->commit();
-                        
+
                         $error = "Withdrawal failed: " . $transfer_result['message'];
                     }
-                    
+
                     header("Location: wallet.php?" . ($success ? "success=" . urlencode($success) : "error=" . urlencode($error)));
                     exit;
-                    
                 } catch (Exception $e) {
                     if ($pdo->inTransaction()) {
                         $pdo->rollBack();
@@ -257,63 +255,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        
+
         // Handle send money
         if (isset($_POST['send_money'])) {
             $recipient_identifier = trim($_POST['recipient']);
             $amount = floatval($_POST['amount']);
             $description = trim($_POST['description']);
-            
+
             if ($amount < 1) {
                 $error = "Minimum transfer amount is ₦1";
             } elseif ($amount > $walletBalance) {
                 $error = "Insufficient balance for transfer";
+            } elseif (empty($recipient_identifier)) {
+                $error = "Please enter recipient's email or phone number";
             } else {
                 try {
-                    // Find recipient
+                    // Enhanced recipient search with better validation
                     $stmt = $pdo->prepare("
-                        SELECT u.id, CONCAT(u.first_name, ' ', u.last_name) as name, w.id as wallet_id 
-                        FROM users u 
-                        LEFT JOIN wallet w ON u.id = w.user_id 
-                        WHERE u.email = ? OR u.phone = ?
-                    ");
+                SELECT 
+                    u.id,
+                    u.email,
+                    u.phone,
+                    CONCAT(u.first_name, ' ', u.last_name) as name, 
+                    w.id as wallet_id,
+                    w.balance as recipient_balance
+                FROM users u 
+                LEFT JOIN wallet w ON u.id = w.user_id 
+                WHERE (u.email = ? OR u.phone = ?)
+                AND u.is_active = 1
+            ");
                     $stmt->execute([$recipient_identifier, $recipient_identifier]);
                     $recipient = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
+
                     if (!$recipient) {
                         $error = "Recipient not found. Please check the email or phone number.";
-                    } elseif ($recipient['id'] == $user_id) {
-                        $error = "You cannot send money to yourself.";
                     } elseif (!$recipient['wallet_id']) {
                         $error = "Recipient does not have a wallet set up.";
+                    } elseif ($recipient['id'] == $user_id) {
+                        $error = "You cannot send money to yourself.";
                     } else {
                         $transaction_ref = 'TRF_' . time() . '_' . rand(1000, 9999);
-                        
+
                         // Start transaction
                         $pdo->beginTransaction();
-                        
+
                         // Deduct from sender
                         $stmt = $pdo->prepare("
-                            UPDATE wallet 
-                            SET balance = balance - ?, updated_at = NOW() 
-                            WHERE id = ?
-                        ");
+                    UPDATE wallet 
+                    SET balance = balance - ?, updated_at = NOW() 
+                    WHERE id = ?
+                ");
                         $stmt->execute([$amount, $wallet_id]);
-                        
+
                         // Add to recipient
                         $stmt = $pdo->prepare("
-                            UPDATE wallet 
-                            SET balance = balance + ?, updated_at = NOW() 
-                            WHERE id = ?
-                        ");
+                    UPDATE wallet 
+                    SET balance = balance + ?, updated_at = NOW() 
+                    WHERE id = ?
+                ");
                         $stmt->execute([$amount, $recipient['wallet_id']]);
-                        
+
                         // Record sender transaction
                         $stmt = $pdo->prepare("
-                            INSERT INTO wallet_transactions 
-                            (wallet_id, amount, type, description, status, transaction_reference, recipient_id, created_at)
-                            VALUES (?, ?, 'transfer_sent', ?, 'completed', ?, ?, NOW())
-                        ");
+                    INSERT INTO wallet_transactions 
+                    (wallet_id, amount, type, description, status, transaction_reference, recipient_id, created_at)
+                    VALUES (?, ?, 'transfer_sent', ?, 'completed', ?, ?, NOW())
+                ");
                         $stmt->execute([
                             $wallet_id,
                             $amount,
@@ -321,13 +328,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $transaction_ref,
                             $recipient['id']
                         ]);
-                        
+
                         // Record recipient transaction
                         $stmt = $pdo->prepare("
-                            INSERT INTO wallet_transactions 
-                            (wallet_id, amount, type, description, status, transaction_reference, sender_id, created_at)
-                            VALUES (?, ?, 'transfer_received', ?, 'completed', ?, ?, NOW())
-                        ");
+                    INSERT INTO wallet_transactions 
+                    (wallet_id, amount, type, description, status, transaction_reference, sender_id, created_at)
+                    VALUES (?, ?, 'transfer_received', ?, 'completed', ?, ?, NOW())
+                ");
                         $stmt->execute([
                             $recipient['wallet_id'],
                             $amount,
@@ -335,12 +342,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $transaction_ref,
                             $user_id
                         ]);
-                        
+
                         $pdo->commit();
-                        
+
                         // Update local balance
                         $walletBalance -= $amount;
-                        
+
                         $success = "₦" . number_format($amount, 2) . " successfully sent to " . $recipient['name'] . "!";
                         header("Location: wallet.php?success=" . urlencode($success));
                         exit;
@@ -353,24 +360,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        
+
         // Handle add bank account
         if (isset($_POST['add_bank_account'])) {
             $bank_name = $_POST['bank_name'];
             $account_number = $_POST['account_number'];
             $account_name = $_POST['account_name'];
-            
+
             try {
                 // Verify account details (in real app, use bank verification API)
                 $is_verified = true; // Simulated verification
-                
+
                 $stmt = $pdo->prepare("
                     INSERT INTO payment_methods 
                     (user_id, type, bank_name, account_number, account_name, is_verified, created_at)
                     VALUES (?, 'bank_account', ?, ?, ?, ?, NOW())
                 ");
                 $stmt->execute([$user_id, $bank_name, $account_number, $account_name, $is_verified]);
-                
+
                 $success = "Bank account added successfully!";
                 header("Location: wallet.php?success=" . urlencode($success));
                 exit;
@@ -390,24 +397,26 @@ if (isset($_GET['error'])) {
 }
 
 // Paystack helper functions
-function verifyPaystackTransaction($reference, $secretKey) {
+function verifyPaystackTransaction($reference, $secretKey)
+{
     $url = "https://api.paystack.co/transaction/verify/" . $reference;
-    
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "Authorization: Bearer " . $secretKey
     ]);
-    
+
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    
+
     return json_decode($response, true);
 }
 
-function processPaystackTransfer($account_number, $bank_code, $amount, $reason, $recipient_name, $secretKey) {
+function processPaystackTransfer($account_number, $bank_code, $amount, $reason, $recipient_name, $secretKey)
+{
     // First create transfer recipient
     $recipient_data = [
         'type' => 'nuban',
@@ -416,7 +425,7 @@ function processPaystackTransfer($account_number, $bank_code, $amount, $reason, 
         'bank_code' => $bank_code,
         'currency' => 'NGN'
     ];
-    
+
     $url = "https://api.paystack.co/transferrecipient";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -427,19 +436,19 @@ function processPaystackTransfer($account_number, $bank_code, $amount, $reason, 
         "Authorization: Bearer " . $secretKey,
         "Content-Type: application/json"
     ]);
-    
+
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    
+
     $result = json_decode($response, true);
-    
+
     if ($http_code !== 200 && $http_code !== 201) {
         return ['success' => false, 'message' => 'Recipient creation failed: ' . ($result['message'] ?? 'Unknown error')];
     }
-    
+
     $recipient_code = $result['data']['recipient_code'];
-    
+
     // Now initiate the transfer
     $transfer_data = [
         'source' => 'balance',
@@ -447,7 +456,7 @@ function processPaystackTransfer($account_number, $bank_code, $amount, $reason, 
         'recipient' => $recipient_code,
         'reason' => $reason
     ];
-    
+
     $url = "https://api.paystack.co/transfer";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -458,13 +467,13 @@ function processPaystackTransfer($account_number, $bank_code, $amount, $reason, 
         "Authorization: Bearer " . $secretKey,
         "Content-Type: application/json"
     ]);
-    
+
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    
+
     $result = json_decode($response, true);
-    
+
     if ($http_code === 200 || $http_code === 201) {
         return ['success' => true, 'data' => $result['data']];
     } else {
@@ -472,7 +481,8 @@ function processPaystackTransfer($account_number, $bank_code, $amount, $reason, 
     }
 }
 
-function getBankCode($bankName) {
+function getBankCode($bankName)
+{
     $bankCodes = [
         'Access Bank' => '044',
         'Citibank' => '023',
@@ -496,7 +506,7 @@ function getBankCode($bankName) {
         'Wema Bank' => '035',
         'Zenith Bank' => '057'
     ];
-    
+
     return $bankCodes[$bankName] ?? '';
 }
 
@@ -504,6 +514,25 @@ $pageTitle = "My Wallet - OnlinePlaza";
 include '../includes/header.php';
 ?>
 
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header Section -->
@@ -546,9 +575,9 @@ include '../includes/header.php';
         </div>
 
         <!-- Action Buttons -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <button onclick="openModal('addFundsModal')" 
-                    class="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow duration-300">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <button onclick="openModal('addFundsModal')"
+                class="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow duration-300">
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fas fa-plus text-green-600 text-xl"></i>
                 </div>
@@ -556,81 +585,68 @@ include '../includes/header.php';
                 <p class="text-gray-600 text-sm">Deposit money to your wallet</p>
             </button>
 
-            <button onclick="openModal('withdrawModal')" 
-                    class="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow duration-300">
+            <button onclick="openModal('withdrawModal')"
+                class="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow duration-300">
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fas fa-paper-plane text-blue-600 text-xl"></i>
                 </div>
                 <h3 class="font-semibold text-gray-900 mb-1">Withdraw</h3>
                 <p class="text-gray-600 text-sm">Send money to your bank</p>
             </button>
-
-            <button onclick="openModal('sendMoneyModal')" 
-                    class="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow duration-300">
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-share-alt text-purple-600 text-xl"></i>
-                </div>
-                <h3 class="font-semibold text-gray-900 mb-1">Send Money</h3>
-                <p class="text-gray-600 text-sm">Transfer to other users</p>
-            </button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Recent Transactions -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-                    <a href="transactions.php" class="text-green-600 hover:text-green-700 text-sm font-medium">
-                        View All
-                    </a>
-                </div>
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+    </div>
 
-                <div class="space-y-4">
-                    <?php if (empty($transactions)): ?>
-                        <div class="text-center py-8">
-                            <i class="fas fa-receipt text-gray-300 text-4xl mb-3"></i>
-                            <p class="text-gray-500">No transactions yet</p>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($transactions as $transaction): ?>
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center 
-                                        <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'; ?>">
-                                        <i class="fas <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'fa-arrow-down' : 'fa-arrow-up'; ?>"></i>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="font-medium text-gray-900 text-sm">
-                                            <?php echo htmlspecialchars($transaction['description']); ?>
-                                        </p>
-                                        <p class="text-gray-500 text-xs">
-                                            <?php echo date('M j, Y g:i A', strtotime($transaction['created_at'])); ?>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'text-green-600' : 'text-red-600'; ?>">
-                                        <?php echo ($transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? '+' : '-'); ?>
-                                        ₦<?php echo number_format($transaction['amount'], 2); ?>
-                                    </p>
-                                    <span class="inline-block px-2 py-1 text-xs rounded-full 
-                                        <?php echo $transaction['status'] === 'completed' ? 'bg-green-100 text-green-800' : 
-                                               ($transaction['status'] === 'processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'); ?>">
-                                        <?php echo ucfirst($transaction['status']); ?>
-                                    </span>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
+    <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+        <?php if (empty($transactions)): ?>
+            <div class="text-center py-8">
+                <i class="fas fa-receipt text-gray-300 text-4xl mb-3"></i>
+                <p class="text-gray-500">No transactions yet</p>
             </div>
+        <?php else: ?>
+            <?php foreach ($transactions as $transaction): ?>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center 
+                            <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'; ?>">
+                            <i class="fas <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'fa-arrow-down' : 'fa-arrow-up'; ?>"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="font-medium text-gray-900 text-sm">
+                                <?php echo htmlspecialchars($transaction['description']); ?>
+                            </p>
+                            <p class="text-gray-500 text-xs">
+                                <?php echo date('M j, Y g:i A', strtotime($transaction['created_at'])); ?>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold <?php echo $transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? 'text-green-600' : 'text-red-600'; ?>">
+                            <?php echo ($transaction['type'] === 'deposit' || $transaction['type'] === 'transfer_received' ? '+' : '-'); ?>
+                            ₦<?php echo number_format($transaction['amount'], 2); ?>
+                        </p>
+                        <span class="inline-block px-2 py-1 text-xs rounded-full 
+                            <?php echo $transaction['status'] === 'completed' ? 'bg-green-100 text-green-800' : ($transaction['status'] === 'processing' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'); ?>">
+                            <?php echo ucfirst($transaction['status']); ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
 
             <!-- Bank Accounts -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">Bank Accounts</h3>
-                    <button onclick="openModal('addBankModal')" 
-                            class="text-green-600 hover:text-green-700 text-sm font-medium flex items-center">
+                    <button onclick="openModal('addBankModal')"
+                        class="text-green-600 hover:text-green-700 text-sm font-medium flex items-center">
                         <i class="fas fa-plus mr-1"></i>
                         Add Account
                     </button>
@@ -641,8 +657,8 @@ include '../includes/header.php';
                         <div class="text-center py-8">
                             <i class="fas fa-university text-gray-300 text-4xl mb-3"></i>
                             <p class="text-gray-500 mb-4">No bank accounts added</p>
-                            <button onclick="openModal('addBankModal')" 
-                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <button onclick="openModal('addBankModal')"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
                                 Add Bank Account
                             </button>
                         </div>
@@ -683,18 +699,18 @@ include '../includes/header.php';
 
         <div class="mb-4">
             <label class="block text-gray-700 mb-2" for="deposit_amount">Amount (₦)</label>
-            <input type="number" id="deposit_amount" min="100" step="100" 
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" 
-                   placeholder="Enter amount">
+            <input type="number" id="deposit_amount" min="100" step="100"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter amount">
             <p class="text-sm text-gray-500 mt-1">Minimum: ₦100</p>
         </div>
 
-        <button onclick="payWithPaystack()" 
-                class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
+        <button onclick="payWithPaystack()"
+            class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
             <i class="fas fa-credit-card mr-2"></i>
             Pay with Paystack
         </button>
-        
+
         <div class="mt-4 p-3 bg-blue-50 rounded-lg">
             <div class="flex items-center">
                 <i class="fas fa-shield-alt text-blue-500 mr-2"></i>
@@ -718,15 +734,15 @@ include '../includes/header.php';
             <input type="hidden" name="csrf_token" value="<?php echo CSRFProtection::generateToken(); ?>">
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="withdraw_amount">Amount (₦)</label>
-                <input type="number" id="withdraw_amount" name="amount" min="100" max="<?php echo $walletBalance; ?>" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <input type="number" id="withdraw_amount" name="amount" min="100" max="<?php echo $walletBalance; ?>"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
                 <p class="text-sm text-gray-500 mt-1">Available: ₦<?php echo number_format($walletBalance, 2); ?></p>
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="bank_account_id">Bank Account</label>
-                <select id="bank_account_id" name="bank_account_id" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <select id="bank_account_id" name="bank_account_id"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
                     <?php foreach ($paymentMethods as $bank): ?>
                         <option value="<?php echo $bank['id']; ?>" <?php echo $bank['is_default'] ? 'selected' : ''; ?>>
                             <?php echo $bank['bank_name'] . ' - ' . $bank['account_name'] . ' (••••' . substr($bank['account_number'], -4) . ')'; ?>
@@ -735,12 +751,12 @@ include '../includes/header.php';
                 </select>
             </div>
 
-            <button type="submit" name="withdraw_funds" 
-                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
+            <button type="submit" name="withdraw_funds"
+                class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
                 <i class="fas fa-paper-plane mr-2"></i>
                 Process Withdrawal
             </button>
-            
+
             <div class="mt-4 p-3 bg-blue-50 rounded-lg">
                 <div class="flex items-center">
                     <i class="fas fa-clock text-blue-500 mr-2"></i>
@@ -761,31 +777,52 @@ include '../includes/header.php';
             </button>
         </div>
 
-        <form method="POST">
+        <form method="POST" id="sendMoneyForm">
             <input type="hidden" name="csrf_token" value="<?php echo CSRFProtection::generateToken(); ?>">
+
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="recipient">Recipient Email or Phone</label>
-                <input type="text" id="recipient" name="recipient" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" 
-                       placeholder="Enter email or phone number" required>
+                <input type="text" id="recipient" name="recipient"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter email or phone number" required
+                    oninput="searchRecipient(this.value)">
+                <div id="recipientSuggestions" class="hidden mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+            </div>
+
+            <div id="recipientInfo" class="hidden mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-user-check text-green-600 mr-2"></i>
+                    <span id="recipientName" class="text-green-800 font-medium"></span>
+                </div>
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="send_amount">Amount (₦)</label>
-                <input type="number" id="send_amount" name="amount" min="1" max="<?php echo $walletBalance; ?>" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <input type="number" id="send_amount" name="amount" min="1" max="<?php echo $walletBalance; ?>"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
                 <p class="text-sm text-gray-500 mt-1">Available: ₦<?php echo number_format($walletBalance, 2); ?></p>
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="description">Description (Optional)</label>
-                <input type="text" id="description" name="description" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" 
-                       placeholder="Add a note">
+                <input type="text" id="description" name="description"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    placeholder="Add a note (e.g., For lunch, Payment for services, etc.)">
             </div>
 
-            <button type="submit" name="send_money" 
-                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-yellow-600 mt-1 mr-2"></i>
+                    <div>
+                        <p class="text-yellow-800 text-sm font-medium">Instant Transfer</p>
+                        <p class="text-yellow-700 text-xs">Money will be sent immediately to recipient's wallet</p>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" name="send_money"
+                class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                id="sendMoneyBtn">
                 <i class="fas fa-paper-plane mr-2"></i>
                 Send Money
             </button>
@@ -807,8 +844,8 @@ include '../includes/header.php';
             <input type="hidden" name="csrf_token" value="<?php echo CSRFProtection::generateToken(); ?>">
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="bank_name">Bank Name</label>
-                <select id="bank_name" name="bank_name" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <select id="bank_name" name="bank_name"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
                     <option value="">Select Bank</option>
                     <option value="Access Bank">Access Bank</option>
                     <option value="First Bank of Nigeria">First Bank of Nigeria</option>
@@ -825,20 +862,20 @@ include '../includes/header.php';
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="account_number">Account Number</label>
-                <input type="text" id="account_number" name="account_number" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" 
-                       placeholder="Enter account number" required maxlength="10">
+                <input type="text" id="account_number" name="account_number"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter account number" required maxlength="10">
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2" for="account_name">Account Name</label>
-                <input type="text" id="account_name" name="account_name" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" 
-                       placeholder="Enter account name" required>
+                <input type="text" id="account_name" name="account_name"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter account name" required>
             </div>
 
-            <button type="submit" name="add_bank_account" 
-                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
+            <button type="submit" name="add_bank_account"
+                class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition flex items-center justify-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Bank Account
             </button>
@@ -855,12 +892,12 @@ include '../includes/header.php';
         const amount = document.getElementById('deposit_amount').value;
         const email = '<?php echo $user_email; ?>';
         const userName = '<?php echo $user_name; ?>';
-        
+
         if (!amount || amount < 100) {
             alert('Please enter a valid amount (minimum ₦100)');
             return;
         }
-        
+
         const handler = PaystackPop.setup({
             key: '<?php echo $paystackPublicKey; ?>',
             email: email,
@@ -905,7 +942,7 @@ include '../includes/header.php';
             }
         });
     });
-    
+
     // Auto-focus amount field when add funds modal opens
     document.getElementById('addFundsModal').addEventListener('click', function(e) {
         if (e.target === this) {
@@ -921,6 +958,108 @@ include '../includes/header.php';
                     closeModal(modal.id);
                 }
             });
+        }
+    });
+
+
+    // Recipient search functionality
+    let recipientSearchTimeout = null;
+
+    function searchRecipient(query) {
+        const suggestionsContainer = document.getElementById('recipientSuggestions');
+        const recipientInfo = document.getElementById('recipientInfo');
+        const sendMoneyBtn = document.getElementById('sendMoneyBtn');
+
+        // Clear previous timeout
+        if (recipientSearchTimeout) {
+            clearTimeout(recipientSearchTimeout);
+        }
+
+        // Hide suggestions and info if query is empty
+        if (query.length < 2) {
+            suggestionsContainer.classList.add('hidden');
+            recipientInfo.classList.add('hidden');
+            sendMoneyBtn.disabled = true;
+            return;
+        }
+
+        // Debounce search
+        recipientSearchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`/online-plaza/wallet/api/search_recipient.php?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.success && data.users.length > 0) {
+                    suggestionsContainer.innerHTML = '';
+                    suggestionsContainer.classList.remove('hidden');
+
+                    data.users.forEach(user => {
+                        const div = document.createElement('div');
+                        div.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
+                        div.innerHTML = `
+                        <div class="font-medium text-gray-900">${user.name}</div>
+                        <div class="text-sm text-gray-600">${user.email} • ${user.phone || 'No phone'}</div>
+                    `;
+                        div.onclick = () => selectRecipient(user);
+                        suggestionsContainer.appendChild(div);
+                    });
+                } else {
+                    suggestionsContainer.classList.add('hidden');
+                    recipientInfo.classList.add('hidden');
+                    sendMoneyBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                suggestionsContainer.classList.add('hidden');
+            }
+        }, 300);
+    }
+
+    function selectRecipient(user) {
+        const recipientInput = document.getElementById('recipient');
+        const suggestionsContainer = document.getElementById('recipientSuggestions');
+        const recipientInfo = document.getElementById('recipientInfo');
+        const recipientName = document.getElementById('recipientName');
+        const sendMoneyBtn = document.getElementById('sendMoneyBtn');
+
+        // Set the input value to the selected user's email
+        recipientInput.value = user.email;
+
+        // Show recipient info
+        recipientName.textContent = `${user.name} (${user.email})`;
+        recipientInfo.classList.remove('hidden');
+
+        // Hide suggestions
+        suggestionsContainer.classList.add('hidden');
+
+        // Enable send button
+        sendMoneyBtn.disabled = false;
+
+        // Focus on amount field
+        document.getElementById('send_amount').focus();
+    }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#recipientSuggestions') && !e.target.closest('#recipient')) {
+            document.getElementById('recipientSuggestions').classList.add('hidden');
+        }
+    });
+
+    // Real-time amount validation
+    document.getElementById('send_amount').addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        const balance = <?php echo $walletBalance; ?>;
+        const sendMoneyBtn = document.getElementById('sendMoneyBtn');
+
+        if (amount > balance) {
+            this.classList.add('border-red-500');
+            sendMoneyBtn.disabled = true;
+        } else {
+            this.classList.remove('border-red-500');
+            // Only enable if recipient is selected
+            const recipientInfo = document.getElementById('recipientInfo');
+            sendMoneyBtn.disabled = recipientInfo.classList.contains('hidden');
         }
     });
 </script>
