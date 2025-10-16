@@ -38,27 +38,22 @@
                 </h4>
                 <ul class="space-y-3">
                     <li>
-                        <a href="/" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
+                        <a href="/online-plaza/index.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
                             <i class="fas fa-chevron-right text-xs mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             Home
                         </a>
                     </li>
                     <li>
-                        <a href="/shop.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
+                        <a href="/online-plaza/posts/index.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
+                            <i class="fas fa-chevron-right text-xs mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            Feed
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="/online-plaza/products/index.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
                             <i class="fas fa-chevron-right text-xs mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             Shop
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/vendors.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
-                            <i class="fas fa-chevron-right text-xs mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            Vendors
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/categories.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
-                            <i class="fas fa-chevron-right text-xs mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            Categories
                         </a>
                     </li>
                 </ul>

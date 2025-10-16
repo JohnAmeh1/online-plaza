@@ -9,23 +9,25 @@ if (isLoggedIn()) {
 // Initialize variables at the top
 $error = '';
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
-    
+
     if (empty($username) || empty($password)) {
         $error = 'Please fill in all fields.';
     } else {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
         $stmt->execute([$username, $username]);
         $user = $stmt->fetch();
-        
+
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['user_type'] = $user['user_type'];
-            
-            header('Location: /online-plaza/index.php');
+
+            // header('Location: /online-plaza/index.php');
+            header('Location: /online-plaza/auth/check_auth.php');
             exit;
         } else {
             $error = 'Invalid username/email or password.';
@@ -33,9 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<?php if (isLoggedIn() && $currentUser && $currentUser['user_type'] === 'admin'): ?>
+    <a href="/online-plaza/admin/index.php" class="text-gray-400 hover:text-white transition-all duration-300 flex items-center group">
+        <i class="fas fa-cog mr-2"></i>
+        Admin Panel
+    </a>
+<?php endif; ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,41 +54,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" href="../assets/martly.svg">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
+
         body {
             font-family: 'Inter', sans-serif;
         }
-        
+
         .gradient-bg {
             background: linear-gradient(135deg, #0c4a6e 0%, #0d9488 50%, #10b981 100%);
         }
-        
+
         .card-shadow {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
-        
+
         .input-focus:focus {
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
             border-color: #0d9488;
         }
-        
+
         .btn-primary {
             background: linear-gradient(to right, #0d9488, #10b981);
             transition: all 0.3s ease;
         }
-        
+
         .btn-primary:hover {
             background: linear-gradient(to right, #0f766e, #059669);
             transform: translateY(-1px);
             box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.4);
         }
-        
+
         .glass-effect {
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .brand-gradient {
             background: linear-gradient(to right, #0d9488, #10b981);
             -webkit-background-clip: text;
@@ -87,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
         <!-- Logo and Brand -->
@@ -99,14 +109,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h1 class="text-4xl font-bold text-white mb-2">Martly</h1>
             <p class="text-teal-100">Premium Shopping Experience</p>
         </div>
-        
+
         <!-- Login Card -->
         <div class="bg-white rounded-xl card-shadow p-8">
             <div class="text-center mb-8">
                 <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
                 <p class="mt-2 text-sm text-gray-600">Sign in to access your account</p>
             </div>
-            
+
             <form class="space-y-6" method="POST">
                 <?php if (!empty($error)): ?>
                     <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md" role="alert">
@@ -120,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                 <?php endif; ?>
-                
+
                 <div class="space-y-4">
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username or Email</label>
@@ -128,22 +138,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-user text-gray-400"></i>
                             </div>
-                            <input id="username" name="username" type="text" required 
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg input-focus focus:ring-teal-500 focus:border-teal-500 transition duration-150" 
-                                   placeholder="Enter your username or email"
-                                   value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                            <input id="username" name="username" type="text" required
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg input-focus focus:ring-teal-500 focus:border-teal-500 transition duration-150"
+                                placeholder="Enter your username or email"
+                                value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
                         </div>
                     </div>
-                    
+
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-lock text-gray-400"></i>
                             </div>
-                            <input id="password" name="password" type="password" required 
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg input-focus focus:ring-teal-500 focus:border-teal-500 transition duration-150" 
-                                   placeholder="Enter your password">
+                            <input id="password" name="password" type="password" required
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg input-focus focus:ring-teal-500 focus:border-teal-500 transition duration-150"
+                                placeholder="Enter your password">
                         </div>
                     </div>
                 </div>
@@ -165,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Sign In
                     </button>
                 </div>
-                
+
                 <div class="text-center pt-4 border-t border-gray-200">
                     <p class="text-sm text-gray-600">
                         Don't have an account?
@@ -176,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
         </div>
-        
+
         <!-- Footer -->
         <div class="text-center mt-8">
             <p class="text-sm text-teal-100">
@@ -185,4 +195,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </body>
+
 </html>

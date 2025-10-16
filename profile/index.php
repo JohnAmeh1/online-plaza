@@ -13,6 +13,11 @@ if ($currentUser['user_type'] === 'vendor') {
     header('Location: /online-plaza/company/dashboard.php');
     exit;
 }
+if ($currentUser['user_type'] === 'admin') {
+    header('Location: /online-plaza/admin/index.php');
+    exit;
+}
+
 
 // Handle become vendor request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

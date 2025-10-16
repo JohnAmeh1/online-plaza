@@ -3,6 +3,7 @@ require_once 'config.php';
 require_once 'functions.php';
 $currentUser = getCurrentUser();
 
+
 // Get cart item count
 $cartCount = 0;
 if (isLoggedIn()) {
@@ -418,13 +419,6 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                         </button>
                     </div>
 
-                    <!-- Mobile install badge -->
-                    <div class="md:hidden flex items-center" id="mobile-install-container">
-                        <button id="pwa-install-badge" class="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-
                     <script>
                         // Force show buttons for testing
                         document.addEventListener('DOMContentLoaded', function() {
@@ -443,12 +437,14 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                                 aria-haspopup="true" aria-expanded="false">
                                 <?php echo strtoupper(substr($currentUser['first_name'] ?? $currentUser['username'], 0, 1)); ?>
                             </button>
+
                             <div id="userDropdownMenu"
                                 class="hidden absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2">
                                 <a href="/online-plaza/index.php" class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 text-sm">
                                     <i class="fas fa-home mr-3 text-green-600 w-4"></i>
                                     <span class="flex-1">Home</span>
                                 </a>
+
                                 <?php if ($currentUser && $currentUser['user_type'] === 'vendor'): ?>
                                     <a href="/online-plaza/activities/index.php" class="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 text-sm">
                                         <i class="fas fa-heart mr-3 text-green-600 w-4"></i>
@@ -461,6 +457,21 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                                     </a>
 
                                 <?php endif; ?>
+                                <!-- Mobile install badge -->
+                                <div class="md:hidden flex items-center" id="mobile-install-container">
+                                    <button id="pwa-install-badge" class="
+                                        ml-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center">                                   
+                                        <i class="fas fa-download mr-3 text-white w-4"></i>
+                                        <span>Install App</span>
+                                    </button>
+                                </div>
+
+                                <script>
+                                    // Force show buttons for testing
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        console.log('Install buttons should be visible now');
+                                    });
+                                </script>
 
                                 <div class="border-t border-gray-100 my-2"></div>
                                 <a href="/online-plaza/auth/logout.php" class="block px-4 py-2 text-red-600 hover:bg-red-50 text-sm">

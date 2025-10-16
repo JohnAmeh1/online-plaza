@@ -84,4 +84,12 @@ function getUnreadActivityCount()
     return $stmt->fetchColumn();
 }
 
-
+// Check if user is admin
+function isAdmin() {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    
+    $currentUser = getCurrentUser();
+    return $currentUser && isset($currentUser['user_type']) && $currentUser['user_type'] === 'admin';
+}
