@@ -4,14 +4,14 @@ require_once 'functions.php';
 $currentUser = getCurrentUser();
 
 
-// Get cart item count
-$cartCount = 0;
-if (isLoggedIn()) {
-    $stmt = $pdo->prepare("SELECT SUM(quantity) as total FROM cart WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $result = $stmt->fetch();
-    $cartCount = $result['total'] ?: 0;
-}
+// // Get cart item count
+// $cartCount = 0;
+// if (isLoggedIn()) {
+//     $stmt = $pdo->prepare("SELECT SUM(quantity) as total FROM cart WHERE user_id = ?");
+//     $stmt->execute([$_SESSION['user_id']]);
+//     $result = $stmt->fetch();
+//     $cartCount = $result['total'] ?: 0;
+// }
 
 // Get unread notifications count for vendors
 $unreadNotifications = 0;
@@ -358,17 +358,17 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                             <span class="nav-link-text">Products</span>
                         </a>
                         <?php if (isLoggedIn()): ?>
-                            <a href="/online-plaza/activities/index.php" class="nav-link relative px-3 lg:px-6 py-2 lg:py-3 rounded-xl font-medium text-gray-700 hover:text-green-600 hover:bg-green-50/50 transition-all duration-300 <?php echo strpos($_SERVER['REQUEST_URI'], 'activities/') !== false ? 'active' : ''; ?>">
-                                <i class="fas fa-heart mr-2"></i>
-                                <span class="nav-link-text">Activities</span>
-                                <?php if ($unreadActivityCount > 0): ?>
-                                    <span class="notification-badge">
-                                        <?php echo $unreadActivityCount > 9 ? '9+' : $unreadActivityCount; ?>
-                                    </span>
-                                <?php endif; ?>
-                            </a>
                             <?php if ($currentUser && $currentUser['user_type'] === 'vendor'): ?>
-                                <a href="/online-plaza/company/orders.php" class="nav-link relative px-3 lg:px-6 py-2 lg:py-3 rounded-xl font-medium text-gray-700 hover:text-green-600 hover:bg-green-50/50 transition-all duration-300 <?php echo strpos($_SERVER['REQUEST_URI'], 'company/orders') !== false ? 'active' : ''; ?>">
+                                <a href="/online-plaza/activities/index.php" class="nav-link relative px-3 lg:px-6 py-2 lg:py-3 rounded-xl font-medium text-gray-700 hover:text-green-600 hover:bg-green-50/50 transition-all duration-300 <?php echo strpos($_SERVER['REQUEST_URI'], 'activities/') !== false ? 'active' : ''; ?>">
+                                    <i class="fas fa-heart mr-2"></i>
+                                    <span class="nav-link-text">Activities</span>
+                                    <?php if ($unreadActivityCount > 0): ?>
+                                        <span class="notification-badge">
+                                            <?php echo $unreadActivityCount > 9 ? '9+' : $unreadActivityCount; ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </a>
+                                <a href="/online-plaza/company/orders.php" class="nav-link relative px-3 lg:px-6 py-2 lg:py-3 rounded-xl font-medium text-gray-700 hover:text-green-600 hover:bg-green-50/50 transition-all duration-300 <?php echo strpos($_SERVER['REQUEST_URI'], 'company/orders') !== false ? 'active' : ''; ?>" onclick="markNotificationsAsRead(event)">
                                     <i class="fas fa-bell mr-2"></i>
                                     <span class="nav-link-text">Notifications</span>
                                     <?php if ($unreadNotifications > 0): ?>
@@ -460,7 +460,7 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                                 <!-- Mobile install badge -->
                                 <div class="md:hidden flex items-center" id="mobile-install-container">
                                     <button id="pwa-install-badge" class="
-                                        ml-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center">                                   
+                                        ml-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center">
                                         <i class="fas fa-download mr-3 text-white w-4"></i>
                                         <span>Install App</span>
                                     </button>
@@ -510,7 +510,7 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                     </span>
                 </a>
                 <!-- Notifications -->
-                <a href="/online-plaza/company/orders.php" class="bottom-nav-item relative <?php echo strpos($_SERVER['REQUEST_URI'], 'company/orders') !== false ? 'active' : ''; ?>">
+                <a href="/online-plaza/company/orders.php" class="bottom-nav-item relative <?php echo strpos($_SERVER['REQUEST_URI'], 'company/orders') !== false ? 'active' : ''; ?>" onclick="markNotificationsAsRead(event)">
                     <i class="fas fa-bell bottom-nav-icon"></i>
                     <span>Notifications</span>
                     <?php if ($unreadNotifications > 0): ?>
@@ -540,16 +540,12 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
                     <i class="fas fa-shopping-bag bottom-nav-icon"></i>
                     <span>Products</span>
                 </a>
-                <!-- Activities -->
-                <a href="/online-plaza/activities/index.php" class="bottom-nav-item relative <?php echo strpos($_SERVER['REQUEST_URI'], 'activities/') !== false ? 'active' : ''; ?>">
-                    <i class="fas fa-heart bottom-nav-icon"></i>
-                    <span>Activities</span>
-                    <?php if ($unreadActivityCount > 0): ?>
-                        <span class="notification-badge-bottom">
-                            <?php echo $unreadActivityCount > 9 ? '9+' : $unreadActivityCount; ?>
-                        </span>
-                    <?php endif; ?>
+                <!-- orders -->
+                <a href="/online-plaza/orders/index.php" class="bottom-nav-item <?php echo strpos($_SERVER['REQUEST_URI'], 'orders/') !== false ? 'active' : ''; ?>">
+                    <i class="fas fa-shopping-cart bottom-nav-icon"></i>
+                    <span>View orders</span>
                 </a>
+                
                 <!-- Profile -->
                 <a href="/online-plaza/profile/index.php" class="bottom-nav-item <?php echo strpos($_SERVER['REQUEST_URI'], 'profile/') !== false ? 'active' : ''; ?>">
                     <i class="fas fa-user bottom-nav-icon"></i>
@@ -596,4 +592,33 @@ $unreadActivityCount = isLoggedIn() ? getUnreadActivityCount() : 0;
             checkScreenSize();
             window.addEventListener('resize', checkScreenSize);
         });
+
+        // Mark notifications as read when clicking the notifications link
+        async function markNotificationsAsRead(event) {
+            try {
+                const response = await fetch('/online-plaza/notifications/mark_read.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Remove notification badge
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        badge.remove();
+                    }
+
+                    // Navigate to orders page
+                    window.location.href = '/online-plaza/company/orders.php';
+                }
+            } catch (error) {
+                console.error('Error marking notifications as read:', error);
+                // Still navigate even if marking fails
+                window.location.href = '/online-plaza/company/orders.php';
+            }
+        }
     </script>

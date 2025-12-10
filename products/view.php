@@ -153,7 +153,7 @@ require_once '../includes/header.php';
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Stock:</span>
                                     <span class="font-semibold <?php echo $product['stock_quantity'] > 0 ? 'text-green-600' : 'text-red-600'; ?>">
-                                        <?php echo $product['stock_quantity'] > 0 ? $product['stock_quantity'] . ' available' : 'Out of Stock'; ?>
+                                        <?php echo $product['stock_quantity'] > 0 ? $product['stock_quantity'] . ' avl.' : 'Out of Stock'; ?>
                                     </span>
                                 </div>
                                 <?php if ($product['category']): ?>
@@ -194,7 +194,7 @@ require_once '../includes/header.php';
                             Visit Store
                         </a>
                         <?php if ($product['stock_quantity'] > 0): ?>
-                            <button onclick="payNow(<?php echo $product['id']; ?>, <?php echo $product['price']; ?>)"
+                            <button onclick="openDeliveryModal(<?php echo $product['id']; ?>, <?php echo $product['price']; ?>)"
                                 class="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold flex items-center justify-center pay-now-btn">
                                 <i class="fas fa-credit-card mr-2"></i>
                                 Buy Now - ₦<?php echo number_format($product['price'], 2); ?>
@@ -205,6 +205,25 @@ require_once '../includes/header.php';
                             </button>
                         <?php endif; ?>
                     </div>
+                    <!-- Action Buttons
+                    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>"
+                            class="flex-1 bg-gradient-to-r from-blue-500 to-green-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-green-600 transition duration-300 font-semibold text-center flex items-center justify-center">
+                            <i class="fas fa-store mr-2"></i>
+                            Visit Store
+                        </a>
+                        <?php if ($product['stock_quantity'] > 0): ?>
+                            <button onclick="payNow(<?php echo $product['id']; ?>, <?php echo $product['price']; ?>)"
+                                class="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 px-6 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold flex items-center justify-center pay-now-btn">
+                                <i class="fas fa-credit-card mr-2"></i>
+                                Buy Now - ₦<?php echo number_format($product['price'], 2); ?>
+                            </button>
+                        <?php else: ?>
+                            <button class="flex-1 bg-gray-400 text-white py-4 px-6 rounded-xl cursor-not-allowed font-semibold" disabled>
+                                Out of Stock
+                            </button>
+                        <?php endif; ?>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -226,6 +245,12 @@ require_once '../includes/header.php';
                                         <span class="font-semibold"><?php echo htmlspecialchars($product['brand']); ?></span>
                                     </div>
                                 <?php endif; ?>
+                                <?php if ($product['location']): ?>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Location:</span>
+                                        <span class="font-semibold"><?php echo htmlspecialchars($product['location']); ?></span>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if ($product['material']): ?>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Material:</span>
@@ -241,9 +266,9 @@ require_once '../includes/header.php';
                             </div>
                         </div>
 
-                        <!-- Physical Specs -->
+                        <!-- product Specs -->
                         <div class="space-y-4">
-                            <h3 class="font-semibold text-gray-700 border-b pb-2">Physical Specifications</h3>
+                            <h3 class="font-semibold text-gray-700 border-b pb-2">Additional Information</h3>
                             <div class="space-y-3">
                                 <?php if ($product['dimensions']): ?>
                                     <div class="flex justify-between">
@@ -421,6 +446,100 @@ require_once '../includes/header.php';
     </div>
 </div>
 
+<!-- Delivery Address Modal -->
+<div id="deliveryModal" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+            <h3 class="text-2xl font-bold text-gray-800">Delivery Address</h3>
+            <button onclick="closeDeliveryModal()" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-6">
+            <form id="deliveryForm" class="space-y-5">
+                <input type="hidden" id="productId" value="">
+                <input type="hidden" id="productPrice" value="">
+
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="fullName" placeholder="Your full name" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" id="phoneNumber" placeholder="e.g., +234 8012345678" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- Email Address -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                    <input type="email" id="emailAddress" placeholder="your@email.com" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- Street Address -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Street Address</label>
+                    <input type="text" id="streetAddress" placeholder="House number, street name" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- City / Town -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">City / Town</label>
+                        <input type="text" id="city" placeholder="City" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">State / Province</label>
+                        <input type="text" id="state" placeholder="State" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                </div>
+
+                <!-- Postal Code -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Postal Code (Optional)</label>
+                    <input type="text" id="postalCode" placeholder="e.g., 101001"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- Delivery Instructions -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Delivery Instructions (Optional)</label>
+                    <textarea id="deliveryInstructions" rows="3" placeholder="Any special instructions for delivery..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 resize-none"></textarea>
+                </div>
+
+                <!-- Address Summary -->
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl border border-green-200">
+                    <p class="text-sm text-gray-600 mb-2"><span class="font-semibold">Product Price:</span></p>
+                    <p class="text-2xl font-bold text-green-600" id="priceDisplay">₦0.00</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+            <button onclick="closeDeliveryModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-xl transition duration-300 font-semibold">
+                Cancel
+            </button>
+            <button onclick="submitDeliveryAndPay()" class="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-3 px-6 rounded-xl transition duration-300 font-semibold flex items-center justify-center delivery-buy-btn">
+                <i class="fas fa-credit-card mr-2"></i>
+                Confirm & Buy Now
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Rating stars interaction
     document.addEventListener('DOMContentLoaded', function() {
@@ -473,27 +592,68 @@ require_once '../includes/header.php';
         });
     });
 
-    // Pay Now functionality
-    async function payNow(productId, price) {
-        const btn = document.querySelector('.pay-now-btn');
-        if (!btn) return;
+    // Open delivery modal
+    function openDeliveryModal(productId, price) {
+        const modal = document.getElementById('deliveryModal');
+        const productIdInput = document.getElementById('productId');
+        const productPriceInput = document.getElementById('productPrice');
+        const priceDisplay = document.getElementById('priceDisplay');
 
-        const originalText = btn.innerHTML;
-        const originalClasses = btn.className;
+        productIdInput.value = productId;
+        productPriceInput.value = price;
+        priceDisplay.textContent = '₦' + parseFloat(price).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 
-        // Confirm payment
-        if (!confirm(`Confirm payment of ₦${price.toLocaleString()} for this product?`)) {
+        // Pre-fill user info if logged in
+        const currentUser = <?php echo json_encode($currentUser); ?>;
+        if (currentUser) {
+            document.getElementById('fullName').value = (currentUser.first_name || '') + ' ' + (currentUser.last_name || '');
+            document.getElementById('emailAddress').value = currentUser.email || '';
+            document.getElementById('phoneNumber').value = currentUser.phone || '';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    // Close delivery modal
+    function closeDeliveryModal() {
+        const modal = document.getElementById('deliveryModal');
+        modal.classList.add('hidden');
+    }
+
+    // Submit delivery address and process payment
+    async function submitDeliveryAndPay() {
+        const form = document.getElementById('deliveryForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
             return;
         }
 
+        const productId = document.getElementById('productId').value;
+        const price = document.getElementById('productPrice').value;
+        const btn = document.querySelector('.delivery-buy-btn');
+        const originalText = btn.innerHTML;
+
+        const deliveryData = {
+            product_id: productId,
+            price: price,
+            full_name: document.getElementById('fullName').value,
+            phone_number: document.getElementById('phoneNumber').value,
+            email_address: document.getElementById('emailAddress').value,
+            street_address: document.getElementById('streetAddress').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            postal_code: document.getElementById('postalCode').value,
+            delivery_instructions: document.getElementById('deliveryInstructions').value
+        };
+
         try {
-            // Show loading state
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
             btn.disabled = true;
 
-            // Process payment via API
             const formData = new FormData();
-            formData.append('product_id', productId);
+            Object.keys(deliveryData).forEach(key => {
+                formData.append(key, deliveryData[key]);
+            });
 
             const response = await fetch('/online-plaza/products/process_payment.php', {
                 method: 'POST',
@@ -503,58 +663,45 @@ require_once '../includes/header.php';
             const result = await response.json();
 
             if (result.success) {
-                // Success state
                 btn.innerHTML = '<i class="fas fa-check mr-2"></i>Payment Successful!';
                 btn.classList.remove('from-green-500', 'to-blue-500', 'hover:from-green-600', 'hover:to-blue-600');
                 btn.classList.add('bg-green-500', 'hover:bg-green-600');
 
-                showNotification(result.message, 'success');
+                showNotification(result.message || 'Order placed successfully!', 'success');
 
-                // Redirect to orders page after 2 seconds
                 setTimeout(() => {
+                    closeDeliveryModal();
                     window.location.href = '/online-plaza/orders/index.php';
                 }, 2000);
             } else {
-                throw new Error(result.message);
+                throw new Error(result.message || 'Payment failed');
             }
 
         } catch (error) {
-            console.error('Payment error:', error);
-
-            // Error state
-            btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Payment Failed';
+            console.error('Error:', error);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error';
             btn.classList.remove('from-green-500', 'to-blue-500', 'hover:from-green-600', 'hover:to-blue-600');
             btn.classList.add('bg-red-500', 'hover:bg-red-600');
 
-            showNotification(error.message || 'Payment failed. Please try again.', 'error');
+            showNotification(error.message || 'An error occurred. Please try again.', 'error');
 
-            // Reset button after 3 seconds
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.className = originalClasses;
+                btn.className = 'flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-3 px-6 rounded-xl transition duration-300 font-semibold flex items-center justify-center delivery-buy-btn';
                 btn.disabled = false;
             }, 3000);
         }
     }
 
-    function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-semibold transform transition-transform duration-300 ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
-                ${message}
-            </div>
-        `;
+    // Close modal when clicking outside
+    document.getElementById('deliveryModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeliveryModal();
+        }
+    });
 
-        document.body.appendChild(notification);
-
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+    function payNow(productId, price) {
+        openDeliveryModal(productId, price);
     }
 </script>
 

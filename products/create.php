@@ -43,12 +43,22 @@ $categories = [
     'office' => 'Office Supplies'
 ];
 
+// Standard ecommerce locations
+$locations = [
+    'wuse' => 'wuse',
+    'Bwari' => 'Bwari',
+    'Kuje' => 'Kuje',
+    'Gwagwalada' => 'Gwagwalada',
+    'Kwali' => 'Kwali'
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $description = trim($_POST['description']);
     $price = (float)$_POST['price'];
     $stock_quantity = (int)$_POST['stock_quantity'];
     $category = trim($_POST['category']);
+    $location = trim($_POST['location']);
     $brand = trim($_POST['brand']);
     $weight = $_POST['weight'] ? (float)$_POST['weight'] : null;
     $dimensions = trim($_POST['dimensions']);
@@ -106,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($error)) {
             // Insert product with platform fee and net amount
-            $stmt = $pdo->prepare("INSERT INTO products (company_id, name, description, price, stock_quantity, category, brand, weight, dimensions, color, size, material, warranty, image_url, media_filename, media_type, platform_fee, net_amount, fee_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO products (company_id, name, description, price, stock_quantity, category, location,  brand, weight, dimensions, color, size, material, warranty, image_url, media_filename, media_type, platform_fee, net_amount, fee_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             if ($stmt->execute([
                 $company['id'],
@@ -115,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $price,
                 $stock_quantity,
                 $category,
+                $location,
                 $brand,
                 $weight,
                 $dimensions,
@@ -198,6 +209,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php endforeach; ?>
                         </div>
                     </div>
+                    <div>
+                        <label class="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">Location *</label>
+                        <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+                            <?php foreach ($locations as $key => $value): ?>
+                                <label class="flex items-center p-2 sm:p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors text-xs sm:text-sm">
+                                    <input type="radio" name="location" value="<?php echo $key; ?>"
+                                        class="mr-2 sm:mr-3 text-green-500 focus:ring-green-400"
+                                        <?php echo (isset($_POST['location']) && $_POST['location'] === $key) ? 'checked' : ''; ?>>
+                                    <span class="font-medium truncate"><?php echo $value; ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -207,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     <div>
-                        <label for="price" class="block text-base sm:text-lg font-medium text-gray-700 mb-2">Price ($) *</label>
+                        <label for="price" class="block text-base sm:text-lg font-medium text-gray-700 mb-2">Price (₦) *</label>
                         <input type="number" id="price" name="price" required step="0.01" min="0.01"
                             class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-base sm:text-lg"
                             placeholder="0.00"
@@ -263,6 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="bg-gray-50 p-4 sm:p-6 rounded-xl">
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">Product Specifications</h2>
 
+                <h3 class="">The below fields are optional, fill in only the relevant fields.</h3>
                 <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                     <div>
                         <label for="weight" class="block text-base sm:text-lg font-medium text-gray-700 mb-2">Weight (kg)</label>

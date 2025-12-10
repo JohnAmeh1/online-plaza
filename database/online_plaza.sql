@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 18, 2025 at 01:05 PM
+-- Generation Time: Dec 10, 2025 at 02:15 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -46,22 +46,11 @@ CREATE TABLE `activities` (
 INSERT INTO `activities` (`id`, `user_id`, `activity_type`, `reference_type`, `reference_id`, `actor_username`, `is_read`, `created_at`, `actor_id`) VALUES
 (1, 3, 'comment', 'post', 1, 'Akagami', 1, '2025-10-16 09:50:03', NULL),
 (3, 3, 'like', 'post', 1, 'Akagami', 1, '2025-10-16 10:02:35', NULL),
-(4, 3, 'comment', 'post', 1, 'Akagami', 1, '2025-10-16 11:30:31', NULL);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `cart`
---
-
-CREATE TABLE `cart` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(4, 3, 'comment', 'post', 1, 'Akagami', 1, '2025-10-16 11:30:31', NULL),
+(5, 3, 'review', 'product', 1, 'Akagami', 1, '2025-12-09 22:34:29', NULL),
+(6, 3, 'like', 'post', 1, 'Akagami', 1, '2025-12-09 23:58:06', NULL),
+(7, 3, 'like', 'post', 2, 'Akagami', 1, '2025-12-10 01:06:54', NULL),
+(8, 3, 'comment', 'post', 2, 'Akagami', 1, '2025-12-10 01:07:26', NULL);
 
 -- --------------------------------------------------------
 
@@ -115,7 +104,7 @@ CREATE TABLE `company_reviews` (
 --
 
 INSERT INTO `company_reviews` (`id`, `company_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES
-(1, 7, 1, 5, 'Excellent Service', '2025-10-16 09:49:19', '2025-10-16 09:49:19');
+(1, 7, 1, 5, 'Excellent Service', '2025-10-16 09:49:19', '2025-12-09 13:59:57');
 
 -- --------------------------------------------------------
 
@@ -134,6 +123,16 @@ CREATE TABLE `notifications` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `type`, `is_read`, `reference_id`, `created_at`) VALUES
+(1, 1, 'Order Placed Successfully', 'Your order #6 for car has been placed successfully. Total: ₦1,000.00', 'order_created', 0, 6, '2025-12-10 00:07:27'),
+(2, 3, 'New Order Received', 'You have received a new order #6 for car from John Ameh. Amount: ₦1,000.00', 'order_created', 1, 6, '2025-12-10 00:07:27'),
+(3, 1, 'Order Placed Successfully', 'Your order #7 for car has been placed successfully. Total: ₦1,000.00', 'order_created', 0, 7, '2025-12-10 00:15:50'),
+(4, 3, 'New Order Received', 'You have received a new order #7 for car from John Ameh. Amount: ₦1,000.00', 'order_created', 1, 7, '2025-12-10 00:15:50');
+
 -- --------------------------------------------------------
 
 --
@@ -150,26 +149,26 @@ CREATE TABLE `orders` (
   `total_amount` decimal(10,2) NOT NULL,
   `status` enum('pending','paid','shipped','delivered','cancelled') DEFAULT 'pending',
   `payment_status` enum('pending','paid','released','refunded') DEFAULT 'pending',
+  `full_name` varchar(100) DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `email_address` varchar(100) DEFAULT NULL,
+  `street_address` text DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `state` varchar(100) DEFAULT NULL,
+  `postal_code` varchar(20) DEFAULT NULL,
+  `delivery_instructions` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Table structure for table `order_items`
+-- Dumping data for table `orders`
 --
 
-CREATE TABLE `order_items` (
-  `id` int(11) NOT NULL,
-  `order_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `unit_price` decimal(10,2) NOT NULL,
-  `total_price` decimal(10,2) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `orders` (`id`, `user_id`, `company_id`, `product_id`, `quantity`, `unit_price`, `total_amount`, `status`, `payment_status`, `full_name`, `phone_number`, `email_address`, `street_address`, `city`, `state`, `postal_code`, `delivery_instructions`, `created_at`, `updated_at`) VALUES
+(5, 1, 7, 9, 1, 1000.00, 1000.00, 'pending', 'paid', 'John Ameh', '+2349023228272', 'johnameh29@gmail.com', 'no 4 Emmanuel close, arabroad, kubwa', 'Bwari', 'Abuja Capital Territory', '901101', 'When you get there, you can call me', '2025-12-09 23:57:29', '2025-12-09 23:57:29'),
+(6, 1, 7, 9, 1, 1000.00, 1000.00, 'pending', 'paid', 'John Ameh', '+2349023228272', 'johnameh29@gmail.com', 'no 4 Emmanuel close, arabroad, kubwa', 'Bwari', 'Abuja Capital Territory', '901101', 'Yh', '2025-12-10 00:07:27', '2025-12-10 00:07:27'),
+(7, 1, 7, 9, 1, 1000.00, 1000.00, 'pending', 'paid', 'John Ameh', '+2349023228272', 'johnameh29@gmail.com', 'no 4 Emmanuel close, arabroad, kubwa', 'Bwari', 'Abuja Capital Territory', '901101', 'Yh yh', '2025-12-10 00:15:50', '2025-12-10 00:15:50');
 
 -- --------------------------------------------------------
 
@@ -230,7 +229,7 @@ CREATE TABLE `posts` (
 --
 
 INSERT INTO `posts` (`id`, `company_id`, `title`, `content`, `media_url`, `media_filename`, `media_type`, `created_at`, `updated_at`) VALUES
-(1, 7, 'Casper Shoes is now open on Martly 🎉🎉🎉', 'We sell shoes', '/online-plaza/uploads/posts/68f0bd5dcc31b_icon-192x192.png', '68f0bd5dcc31b_icon-192x192.png', 'image', '2025-10-16 09:39:41', '2025-10-16 09:39:41');
+(2, 7, 'Casper Shoes is now active on Martly🤭🤭', 'We are active guys, pls patronize us🙏', '/online-plaza/uploads/posts/6938c67d17881_20251128_211003.jpg', '6938c67d17881_20251128_211003.jpg', 'image', '2025-12-10 01:01:49', '2025-12-10 01:01:49');
 
 -- --------------------------------------------------------
 
@@ -245,6 +244,13 @@ CREATE TABLE `post_comments` (
   `comment` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `post_comments`
+--
+
+INSERT INTO `post_comments` (`id`, `post_id`, `user_id`, `comment`, `created_at`) VALUES
+(2, 2, 1, 'I can\'t wait for you guys stuffs', '2025-12-10 01:07:26');
 
 -- --------------------------------------------------------
 
@@ -264,8 +270,7 @@ CREATE TABLE `post_likes` (
 --
 
 INSERT INTO `post_likes` (`id`, `user_id`, `post_id`, `created_at`) VALUES
-(1, 1, 1, '2025-10-16 10:02:35'),
-(2, 3, 1, '2025-10-16 11:26:25');
+(4, 1, 2, '2025-12-10 01:06:54');
 
 -- --------------------------------------------------------
 
@@ -279,13 +284,6 @@ CREATE TABLE `post_shares` (
   `user_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `post_shares`
---
-
-INSERT INTO `post_shares` (`id`, `post_id`, `user_id`, `created_at`) VALUES
-(1, 1, 1, '2025-10-16 09:50:08');
 
 -- --------------------------------------------------------
 
@@ -304,6 +302,7 @@ CREATE TABLE `products` (
   `media_type` enum('image','video') DEFAULT 'image',
   `stock_quantity` int(11) DEFAULT 0,
   `category` varchar(100) DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL,
   `brand` varchar(100) DEFAULT NULL,
   `weight` decimal(8,2) DEFAULT NULL,
   `dimensions` varchar(100) DEFAULT NULL,
@@ -318,6 +317,13 @@ CREATE TABLE `products` (
   `net_amount` decimal(10,2) DEFAULT 0.00,
   `fee_percentage` decimal(5,2) DEFAULT 7.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `products`
+--
+
+INSERT INTO `products` (`id`, `company_id`, `name`, `description`, `price`, `image_url`, `media_filename`, `media_type`, `stock_quantity`, `category`, `location`, `brand`, `weight`, `dimensions`, `color`, `size`, `material`, `warranty`, `shipping_time`, `created_at`, `updated_at`, `platform_fee`, `net_amount`, `fee_percentage`) VALUES
+(9, 7, 'car', 'car', 1000.00, '/online-plaza/uploads/products/6938c86527413_6938251ecb59c_1080.jpg', '6938c86527413_6938251ecb59c_1080.jpg', 'image', 1, 'automotive', 'Bwari', 'Toyota', NULL, '', '', '', '', '', NULL, '2025-12-09 23:43:24', '2025-12-10 01:09:57', 50.00, 950.00, 5.00);
 
 -- --------------------------------------------------------
 
@@ -353,6 +359,16 @@ CREATE TABLE `transactions` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `transactions`
+--
+
+INSERT INTO `transactions` (`id`, `user_id`, `order_id`, `amount`, `type`, `description`, `reference_id`, `reference_type`, `status`, `created_at`) VALUES
+(1, 1, NULL, 1000.00, 'debit', 'Purchase: car (Order #5)', NULL, NULL, 'pending', '2025-12-09 23:57:29'),
+(2, 1, NULL, 1000.00, 'debit', 'Purchase: car (Order #6)', NULL, NULL, 'pending', '2025-12-10 00:07:27'),
+(3, 1, NULL, 1000.00, 'debit', 'Purchase: car (Order #7)', NULL, NULL, 'pending', '2025-12-10 00:15:50'),
+(4, 3, NULL, 400.00, 'credit', 'Referral bonus for new user signup', NULL, NULL, 'completed', '2025-12-10 00:49:38');
+
 -- --------------------------------------------------------
 
 --
@@ -381,7 +397,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `first_name`, `last_name`, `profile_picture`, `user_type`, `referral_code`, `referred_by`, `created_at`, `updated_at`, `referred_count`) VALUES
 (1, 'Akagami', 'johnameh29@gmail.com', '$2y$10$GwmMmQWuF2WjsVoWY2fBP./FV2bHIxFofpp1X9vUYAmvIkBinsawK', 'John', 'Ameh', NULL, 'customer', 'c040a234c5', NULL, '2025-10-14 11:58:24', '2025-10-14 11:58:24', 0),
-(3, 'casper', 'johnameh10@gmail.com', '$2y$10$rqS8X2G13OEQsqwjEvDQ5eM33Zv35Vkf6oh7NLFIXu/E40/KckyDO', 'casper', 'walker', NULL, 'vendor', '2045ae1e2e', NULL, '2025-10-14 12:10:40', '2025-10-14 12:49:03', 0),
+(3, 'casper', 'johnameh10@gmail.com', '$2y$10$rqS8X2G13OEQsqwjEvDQ5eM33Zv35Vkf6oh7NLFIXu/E40/KckyDO', 'casper', 'walker', NULL, 'vendor', '2045ae1e2e', NULL, '2025-10-14 12:10:40', '2025-12-10 00:49:38', 1),
 (4, 'admin', 'admin@gmail.com', '$2y$10$9BbodI1fqC/qhllbimiXWOCqrm/VnOkZyrZBIVx2pv1XXFzacSOlW', 'John', 'Ameh', NULL, 'admin', '6b3dab4d98', NULL, '2025-10-16 12:19:50', '2025-10-16 12:20:12', 0);
 
 -- --------------------------------------------------------
@@ -429,8 +445,8 @@ CREATE TABLE `wallet` (
 --
 
 INSERT INTO `wallet` (`id`, `user_id`, `balance`, `created_at`, `updated_at`) VALUES
-(1, 1, 10000.00, '2025-10-14 11:58:24', '2025-10-16 11:32:10'),
-(3, 3, 10000.00, '2025-10-14 12:10:40', '2025-10-16 11:21:29'),
+(1, 1, 3000000.00, '2025-10-14 11:58:24', '2025-12-10 00:29:46'),
+(3, 3, 1300400.00, '2025-10-14 12:10:40', '2025-12-10 00:49:38'),
 (4, 4, 0.00, '2025-10-16 12:19:50', '2025-10-16 12:19:50');
 
 -- --------------------------------------------------------
@@ -449,6 +465,15 @@ CREATE TABLE `wallet_escrow` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `released_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `wallet_escrow`
+--
+
+INSERT INTO `wallet_escrow` (`id`, `user_id`, `company_id`, `order_id`, `amount`, `status`, `created_at`, `released_at`) VALUES
+(1, 1, 7, 5, 1000.00, 'held', '2025-12-09 23:57:29', NULL),
+(2, 1, 7, 6, 1000.00, 'held', '2025-12-10 00:07:27', NULL),
+(3, 1, 7, 7, 1000.00, 'held', '2025-12-10 00:15:50', NULL);
 
 -- --------------------------------------------------------
 
@@ -476,18 +501,6 @@ CREATE TABLE `wallet_transactions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `wallet_transactions`
---
-
-INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `amount`, `type`, `description`, `status`, `payment_method`, `transaction_reference`, `paystack_reference`, `bank_name`, `account_number`, `account_name`, `recipient_id`, `sender_id`, `created_at`, `updated_at`) VALUES
-(1, 3, 1000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_808480577', NULL, NULL, NULL, NULL, NULL, '2025-10-16 10:12:47', '2025-10-16 10:12:47'),
-(2, 3, 1000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_944681905', NULL, NULL, NULL, NULL, NULL, '2025-10-16 11:07:15', '2025-10-16 11:07:15'),
-(3, 3, 1000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_305705822', NULL, NULL, NULL, NULL, NULL, '2025-10-16 11:12:22', '2025-10-16 11:12:22'),
-(4, 3, 2000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_648636980', NULL, NULL, NULL, NULL, NULL, '2025-10-16 11:13:26', '2025-10-16 11:13:26'),
-(5, 3, 5000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_39400423', NULL, NULL, NULL, NULL, NULL, '2025-10-16 11:21:29', '2025-10-16 11:21:29'),
-(6, 1, 10000.00, 'deposit', 'Wallet deposit via Paystack', 'completed', 'paystack', NULL, 'WLT_204743027', NULL, NULL, NULL, NULL, NULL, '2025-10-16 11:32:10', '2025-10-16 11:32:10');
-
---
 -- Indexes for dumped tables
 --
 
@@ -497,14 +510,6 @@ INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `amount`, `type`, `descrip
 ALTER TABLE `activities`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `cart`
---
-ALTER TABLE `cart`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_user_product` (`user_id`,`product_id`),
-  ADD KEY `product_id` (`product_id`);
 
 --
 -- Indexes for table `companies`
@@ -535,14 +540,6 @@ ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `company_id` (`company_id`),
-  ADD KEY `product_id` (`product_id`);
-
---
--- Indexes for table `order_items`
---
-ALTER TABLE `order_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `order_id` (`order_id`),
   ADD KEY `product_id` (`product_id`);
 
 --
@@ -665,13 +662,7 @@ ALTER TABLE `wallet_transactions`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `cart`
---
-ALTER TABLE `cart`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `companies`
@@ -689,19 +680,13 @@ ALTER TABLE `company_reviews`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `order_items`
---
-ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `payment_methods`
@@ -719,19 +704,19 @@ ALTER TABLE `platform_earnings`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `post_comments`
 --
 ALTER TABLE `post_comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `post_shares`
@@ -743,25 +728,25 @@ ALTER TABLE `post_shares`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `product_reviews`
 --
 ALTER TABLE `product_reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `vendor_subscriptions`
@@ -773,19 +758,19 @@ ALTER TABLE `vendor_subscriptions`
 -- AUTO_INCREMENT for table `wallet`
 --
 ALTER TABLE `wallet`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `wallet_escrow`
 --
 ALTER TABLE `wallet_escrow`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `wallet_transactions`
 --
 ALTER TABLE `wallet_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -796,13 +781,6 @@ ALTER TABLE `wallet_transactions`
 --
 ALTER TABLE `activities`
   ADD CONSTRAINT `activities_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `cart`
---
-ALTER TABLE `cart`
-  ADD CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `cart_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `companies`
@@ -830,13 +808,6 @@ ALTER TABLE `orders`
   ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`),
   ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
-
---
--- Constraints for table `order_items`
---
-ALTER TABLE `order_items`
-  ADD CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `payment_methods`

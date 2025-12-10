@@ -131,12 +131,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
                                         <a href="/online-plaza/products/edit.php?id=<?php echo $product['id']; ?>" class="text-green-600 hover:text-green-900" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this product? This action cannot be undone.');">
+                                        <!-- <form method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this product? This action cannot be undone.');">
                                             <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                                             <button type="submit" name="delete_product" class="text-red-600 hover:text-red-900" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
-                                        </form>
+                                        </form> -->
                                     </div>
                                 </td>
                             </tr>

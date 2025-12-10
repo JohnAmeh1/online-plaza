@@ -72,7 +72,8 @@ if (isLoggedIn()) {
 
                     <!-- Post Content -->
                     <div class="px-4 pb-3">
-                        <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap">
+                        <p class="text-gray-700 text-base leading-relaxed">
+                        <!-- <p class="text-gray-700 text-base leading-relaxed whitespace-pre-wrap"> -->
                             <?php echo htmlspecialchars($post['content']); ?>
                         </p>
                     </div>
@@ -181,17 +182,36 @@ if (isLoggedIn()) {
         <!-- Comment Input -->
         <div class="p-6 border-t border-gray-200 bg-gray-50">
             <div class="flex space-x-3">
-                <input type="text"
-                    placeholder="Write a comment..."
-                    class="flex-1 px-4 py-3 bg-white text-gray-800 placeholder-gray-500 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 comment-input border border-gray-200"
-                    id="commentInput">
-                <button class="px-6 py-3 bg-gradient-to-r from-blue-400 to-cyan-400 text-white font-bold rounded-full hover:from-blue-500 hover:to-cyan-500 transition-all duration-300 post-comment-btn shadow-lg hover:shadow-xl hover:scale-105">
-                    Post
-                </button>
+                <div class="relative flex-1">
+                    <input type="text"
+                        placeholder="Write a comment..."
+                        class="w-full pr-14 px-4 py-3 bg-white text-gray-800 placeholder-gray-500 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 comment-input border border-gray-200"
+                        id="commentInput"
+                        aria-label="Write a comment">
+                    <button type="button"
+                        class="post-comment-btn absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-gradient-to-r from-blue-400 to-cyan-400 text-white rounded-full shadow-lg hover:from-blue-500 hover:to-cyan-500 transition-all duration-200 flex items-center justify-center"
+                        aria-label="Post comment">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Comment Input
+<div class="p-6 border-t border-gray-200 bg-gray-50">
+    <div class="flex space-x-3">
+        <input type="text"
+            placeholder="Write a comment..."
+            class="flex-1 px-4 py-3 bg-white text-gray-800 placeholder-gray-500 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 comment-input border border-gray-200"
+            id="commentInput">
+        <button class="px-6 py-3 bg-gradient-to-r from-blue-400 to-cyan-400 text-white font-bold rounded-full hover:from-blue-500 hover:to-cyan-500 transition-all duration-300 post-comment-btn shadow-lg hover:shadow-xl hover:scale-105">
+            Post
+        </button>
+    </div>
+</div> -->
+
 
 <style>
     /* Custom scrollbar */

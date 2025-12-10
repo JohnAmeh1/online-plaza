@@ -184,7 +184,7 @@ $totalReferralEarnings = $stmt->fetchColumn();
                             </button>
                             <a href="/online-plaza/orders/index.php" 
                                class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center font-bold shadow-lg">
-                                <i class="fas fa-shopping-bag mr-2"></i>View Orders
+                                <i class="fas fa-shopping-cart mr-2"></i>View Orders
                             </a>
                             <a href="/online-plaza/profile/edit.php" 
                                class="block w-full bg-gradient-to-r from-slate-600 to-gray-700 text-white py-3 px-4 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300 text-center font-bold shadow-lg">

@@ -6,7 +6,8 @@
             <div class="space-y-4">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-shopping-bag text-white text-lg"></i>
+                        <i class="fas fa-store text-white text-lg"></i>
+                        <!-- <i class="fas fa-shopping-bag text-white text-lg"></i> -->
                     </div>
                     <h3 class="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Martly</h3>
                 </div>

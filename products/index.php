@@ -4,6 +4,7 @@ require_once '../includes/functions.php';
 
 // Get filters
 $category = $_GET['category'] ?? '';
+$locations = $_GET['location'] ?? '';
 $search = $_GET['search'] ?? '';
 $min_price = $_GET['min_price'] ?? '';
 $max_price = $_GET['max_price'] ?? '';
@@ -29,6 +30,10 @@ if (!empty($category)) {
     $query .= " AND p.category = ?";
     $params[] = $category;
 }
+if (!empty($locations)) {
+    $query .= " AND p.location = ?";
+    $params[] = $locations;
+}
 
 if (!empty($min_price)) {
     $query .= " AND p.price >= ?";
@@ -49,6 +54,7 @@ $products = $stmt->fetchAll();
 
 // Get categories for filter
 $categories = $pdo->query("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != '' ORDER BY category")->fetchAll();
+$locations = $pdo->query("SELECT DISTINCT location FROM products WHERE location IS NOT NULL AND location != '' ORDER BY location")->fetchAll();
 
 $pageTitle = "Products - Martly";
 require_once '../includes/header.php';
@@ -66,9 +72,9 @@ require_once '../includes/header.php';
                 <div class="w-full md:w-auto">
                     <form method="GET" class="flex space-x-2">
                         <div class="relative flex-1 md:w-80">
-                            <input type="text" name="search" placeholder="Search products..." 
-                                   value="<?php echo htmlspecialchars($search); ?>"
-                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <input type="text" name="search" placeholder="Search products..."
+                                value="<?php echo htmlspecialchars($search); ?>"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
                             <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
                         <button type="submit" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold">
@@ -85,51 +91,64 @@ require_once '../includes/header.php';
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-4">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
-                        <?php if ($category || $min_price || $max_price): ?>
+                        <?php if ($category || $locations || $min_price || $max_price): ?>
                             <a href="/online-plaza/products/index.php" class="text-sm text-green-600 hover:text-green-700 font-medium">
                                 Clear All
                             </a>
                         <?php endif; ?>
                     </div>
-                    
+
                     <form method="GET" class="space-y-6">
                         <?php if (!empty($search)): ?>
                             <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
                         <?php endif; ?>
-                        
+
                         <!-- Category Filter -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Category</label>
+                            <!-- <label class="block text-sm font-semibold text-gray-700 mb-3">Category</label> -->
                             <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
                                 <option value="">All Categories</option>
                                 <?php foreach ($categories as $cat): ?>
-                                    <option value="<?php echo htmlspecialchars($cat['category']); ?>" 
+                                    <option value="<?php echo htmlspecialchars($cat['category']); ?>"
                                         <?php echo $category === $cat['category'] ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($cat['category']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        
+                        <!-- location Filter -->
+                        <div>
+                            <!-- <label class="block text-sm font-semibold text-gray-700 mb-3">Location</label> -->
+                            <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                                <option value="">All Locations</option>
+                                <?php foreach ($locations as $loc): ?>
+                                    <option value="<?php echo htmlspecialchars($loc['location']); ?>"
+                                        <?php echo $locations === $loc['location'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($loc['location']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
                         <!-- Price Range -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-3">Price Range</label>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <input type="number" name="min_price" placeholder="Min" 
-                                           value="<?php echo htmlspecialchars($min_price); ?>"
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                           min="0">
+                                    <input type="number" name="min_price" placeholder="Min"
+                                        value="<?php echo htmlspecialchars($min_price); ?>"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        min="0">
                                 </div>
                                 <div>
-                                    <input type="number" name="max_price" placeholder="Max" 
-                                           value="<?php echo htmlspecialchars($max_price); ?>"
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                           min="0">
+                                    <input type="number" name="max_price" placeholder="Max"
+                                        value="<?php echo htmlspecialchars($max_price); ?>"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        min="0">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Apply Filters Button -->
                         <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold">
                             Apply Filters
@@ -150,83 +169,95 @@ require_once '../includes/header.php';
             <!-- Products Grid -->
             <div class="lg:col-span-3">
                 <?php if ($products): ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                         <?php foreach ($products as $product): ?>
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition duration-300 group">
+                            <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md sm:hover:shadow-lg transition duration-300 group flex flex-col h-full">
                                 <!-- Product Image -->
-                                <div class="relative h-48 bg-gray-100 overflow-hidden">
+                                <div class="relative pt-[100%] sm:pt-0 sm:h-48 bg-gray-100 overflow-hidden">
                                     <?php if ($product['image_url']): ?>
-                                        <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                             alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                        <img src="<?php echo htmlspecialchars($product['image_url']); ?>"
+                                            alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                            class="absolute top-0 left-0 w-full h-full object-cover sm:relative sm:w-full sm:h-full group-hover:scale-105 transition duration-300">
                                     <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-                                            <i class="fas fa-image text-4xl text-gray-400"></i>
+                                        <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 sm:relative sm:w-full sm:h-full">
+                                            <i class="fas fa-image text-3xl sm:text-4xl text-gray-400"></i>
                                         </div>
                                     <?php endif; ?>
-                                    
-                                    <!-- Badges -->
-                                    <div class="absolute top-3 left-3 flex flex-col space-y-1">
+
+                                    <!-- Badges - Adjusted for mobile -->
+                                    <div class="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col space-y-1">
                                         <?php if (strtotime($product['created_at']) > strtotime('-7 days')): ?>
-                                            <span class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">New</span>
+                                            <span class="bg-blue-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">New</span>
                                         <?php endif; ?>
                                         <?php if ($product['stock_quantity'] < 10 && $product['stock_quantity'] > 0): ?>
-                                            <span class="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">Low Stock</span>
+                                            <span class="bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">Low Stock</span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
 
                                 <!-- Product Info -->
-                                <div class="p-4">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h3 class="font-semibold text-gray-900 text-lg line-clamp-2"><?php echo htmlspecialchars($product['name']); ?></h3>
-                                        <span class="text-green-600 font-bold text-xl">₦<?php echo number_format($product['price'], 2); ?></span>
-                                    </div>
-                                    
-                                    <p class="text-gray-600 text-sm mb-3 line-clamp-2"><?php echo htmlspecialchars($product['description']); ?></p>
-                                    
-                                    <!-- Company and Rating -->
-                                    <div class="flex items-center justify-between mb-3">
-                                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>" 
-                                           class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
-                                            <i class="fas fa-store mr-1 text-sm"></i>
-                                            <?php echo htmlspecialchars($product['company_name']); ?>
-                                        </a>
-                                        
-                                        <?php if ($product['avg_rating']): ?>
-                                            <div class="flex items-center text-sm">
-                                                <div class="flex text-yellow-400 mr-1">
-                                                    <?php
-                                                    $rating = round($product['avg_rating']);
-                                                    for ($i = 1; $i <= 5; $i++):
-                                                        if ($i <= $rating):
-                                                    ?>
-                                                        <i class="fas fa-star text-xs"></i>
-                                                    <?php else: ?>
-                                                        <i class="far fa-star text-xs"></i>
-                                                    <?php endif; endfor; ?>
+                                <div class="p-3 sm:p-4 flex flex-col flex-grow">
+                                    <div class="mb-2 flex-grow">
+                                        <!-- Product Name - Single line on mobile -->
+                                        <h3 class="font-semibold text-gray-900 text-sm sm:text-lg line-clamp-2 mb-1 sm:mb-2">
+                                            <?php echo htmlspecialchars($product['name']); ?>
+                                        </h3>
+
+                                        <!-- Price - More prominent on mobile -->
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-green-600 font-bold text-base sm:text-xl">
+                                                ₦<?php echo number_format($product['price'], 2); ?>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between mb-2">
+
+                                            <?php if ($product['avg_rating']): ?>
+                                                <div class="flex items-center text-xs sm:text-sm">
+                                                    <div class="flex text-yellow-400 mr-1">
+                                                        <?php
+                                                        $rating = round($product['avg_rating']);
+                                                        for ($i = 1; $i <= 5; $i++):
+                                                            if ($i <= $rating):
+                                                        ?>
+                                                                <i class="fas fa-star text-[10px] sm:text-xs"></i>
+                                                            <?php else: ?>
+                                                                <i class="far fa-star text-[10px] sm:text-xs"></i>
+                                                        <?php endif;
+                                                        endfor; ?>
+                                                    </div>
+                                                    <span class="text-gray-500 text-[10px] sm:text-xs">(<?php echo $product['review_count']; ?>)</span>
                                                 </div>
-                                                <span class="text-gray-500 text-xs">(<?php echo $product['review_count']; ?>)</span>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-gray-400 text-xs">No reviews</span>
-                                        <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Company name - smaller on mobile -->
+                                        <a href="/online-plaza/company/index.php?id=<?php echo $product['company_id']; ?>"
+                                            class="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium flex items-center mb-2">
+                                            <i class="fas fa-store mr-1 text-xs sm:text-sm"></i>
+                                            <span class="truncate"><?php echo htmlspecialchars($product['company_name']); ?></span>
+                                        </a>
+
+                                        <!-- Description - hidden on mobile, shown on larger screens -->
+                                        <!-- < -->
                                     </div>
-                                    
-                                    <!-- Stock and Category -->
-                                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+
+                                    <!-- Stock and Category - Compact on mobile -->
+                                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3 sm:mb-4 mt-auto">
                                         <span class="flex items-center">
-                                            <i class="fas fa-box mr-1"></i>
-                                            <?php echo $product['stock_quantity']; ?> in stock
+                                            <i class="fas fa-box mr-1 text-xs"></i>
+                                            <span class="hidden sm:inline"><?php echo $product['stock_quantity']; ?> in stock</span>
+                                            <span class="sm:hidden"><?php echo $product['stock_quantity']; ?></span>
                                         </span>
                                         <?php if ($product['category']): ?>
-                                            <span class="bg-gray-100 px-2 py-1 rounded-lg text-xs"><?php echo htmlspecialchars($product['category']); ?></span>
+                                            <span class="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate max-w-[100px]">
+                                                <?php echo htmlspecialchars($product['category']); ?>
+                                            </span>
                                         <?php endif; ?>
                                     </div>
-                                    
-                                    <!-- Action Button -->
-                                    <a href="/online-plaza/products/view.php?id=<?php echo $product['id']; ?>" 
-                                       class="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white text-center py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold">
+
+                                    <!-- Action Button - Full width -->
+                                    <a href="/online-plaza/products/view.php?id=<?php echo $product['id']; ?>"
+                                        class="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white text-center py-2 sm:py-3 rounded-lg sm:rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold text-sm sm:text-base">
                                         View Details
                                     </a>
                                 </div>
@@ -234,7 +265,7 @@ require_once '../includes/header.php';
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <!-- Empty State -->
+                    <!-- Empty State - unchanged -->
                     <div class="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
                         <div class="max-w-md mx-auto">
                             <div class="w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -243,12 +274,12 @@ require_once '../includes/header.php';
                             <h3 class="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
                             <p class="text-gray-600 mb-6">Try adjusting your search criteria or browse different categories.</p>
                             <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                                <a href="/online-plaza/products/index.php" 
-                                   class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold">
+                                <a href="/online-plaza/products/index.php"
+                                    class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-blue-600 transition duration-300 font-semibold">
                                     Clear Filters
                                 </a>
-                                <a href="/online-plaza/" 
-                                   class="border border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-50 transition duration-300 font-semibold">
+                                <a href="/online-plaza/"
+                                    class="border border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-50 transition duration-300 font-semibold">
                                     Browse Home
                                 </a>
                             </div>
